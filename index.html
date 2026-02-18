@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <style>
+html, body {
+    margin: 0;
+    padding: 0;
+}
+
+.expr-node {
+    display: inline-flex;
+    align-items: center;
+    margin: 0 2px;
+}
+
+.fraction {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 0 2px;
+}
+
+.numerator, .denominator {
+    text-align: center;
+    line-height: 1em;
+}
+
+.numerator {
+    border-bottom: 1px solid black;
+}
+    </style>
+    <script src="box.js"></script>
+    <script src="core.js"></script>
+    <script>
+onload = () => {
+
+    const controller = new NodeStateController();
+    window.controller = controller; 
+    controller.onNodeClick = (node, state) => {
+        window.lastclick = node;
+        console.log("Node clicked:", node, state);
+        controller.setSelected(node, !state.selected);
+    };
+
+
+//    window.expr = Umform.ExprNode.parse('power(var{"e"},fraction(product(var{"a"},sum(var{"b"},var{"c"})),power(var{"d"},number{2})))');
+//    window.expr = Umform.ExprNode.parse('power(var{"a"},fraction(var{"b"},var{"c"}))');
+
+    window.expr = Umform.ExprNode.parse('product(var{"G"},fraction(product(var{"m1"},var{"m2"}),power(var{"r"},number{2})))');
+
+//    window.expr = Umform.ExprNode.parse('product(var{"a"},sum(var{"b"},var{"c"}),fraction(var{"d"},var{"e"}))');
+    const ui2 = new Umform.ExprNodeUI(window.expr, controller);
+
+    const viewer = new ExprViewer(ui2, window.innerWidth-10, window.innerHeight-10);
+
+    document.body.appendChild(viewer.element);
+
+
+    
+};
+    </script>
+    <title>Leere Seite</title>
+</head>
+<body>
+
+</body>
+</html>
