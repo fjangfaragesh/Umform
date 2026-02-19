@@ -31,34 +31,43 @@ html, body {
     border-bottom: 1px solid black;
 }
     </style>
-    <script src="box.js"></script>
     <script src="core.js"></script>
+    <script src="box.js"></script>
+    <script src="ui.js"></script>
+
+    <script src="types.core.js"></script>
+    <script src="types.logical.js"></script>
+    <script src="types.math.basic.js"></script>
+    <script src="types.equation.js"></script>
+
+    <script src="rules.math.basic.js"></script>
+    <script src="rules.logical.js"></script>
+    <script src="rules.equation.js"></script>
+
+    <script src="exampletasks.js"></script>
     <script>
+let controller = null;
+let expr = null;
+let pattern = null;
+
+let ws;
+
 onload = () => {
 
-    const controller = new NodeStateController();
-    window.controller = controller; 
-    controller.onNodeClick = (node, state) => {
-        window.lastclick = node;
-        console.log("Node clicked:", node, state);
-        controller.setSelected(node, !state.selected);
-    };
+    expr = p(EXAMPLE_TASKS[4].task);
+    //expr = p('sum(product(id{"a"},id{"b"},id{"x"}),product(id{"y"},id{"b"},id{"a"}))');
+    //expr = p('equals(id{"x"},product(sum(id{"a"},id{"b"}),sum(id{"c"},id{"d"})))');
+
+    let workspace = new Umform.Workspace({
+        expr: expr,
+        rules: Array.from(Umform.RULES.values()),
+        autoRules: Array.from(Umform.AUTO_RULES.values()),
+    });
+    document.body.appendChild(workspace.element);
 
 
-//    window.expr = Umform.ExprNode.parse('power(var{"e"},fraction(product(var{"a"},sum(var{"b"},var{"c"})),power(var{"d"},number{2})))');
-//    window.expr = Umform.ExprNode.parse('power(var{"a"},fraction(var{"b"},var{"c"}))');
-
-    window.expr = Umform.ExprNode.parse('product(var{"G"},fraction(product(var{"m1"},var{"m2"}),power(var{"r"},number{2})))');
-
-//    window.expr = Umform.ExprNode.parse('product(var{"a"},sum(var{"b"},var{"c"}),fraction(var{"d"},var{"e"}))');
-    const ui2 = new Umform.ExprNodeUI(window.expr, controller);
-
-    const viewer = new ExprViewer(ui2, window.innerWidth-10, window.innerHeight-10);
-
-    document.body.appendChild(viewer.element);
 
 
-    
 };
     </script>
     <title>Leere Seite</title>

@@ -18,6 +18,28 @@ Umform.ExprNode = class ExprNode {
         });
     }
 
+    cloneReplace(nodeToReplace, replacementNode) {
+        if (this === nodeToReplace) {
+            return replacementNode.clone();
+        }
+        return new ExprNode({
+            type: this.type,
+            data: structuredClone(this.data),
+            children: this.children.map(c => c.cloneReplace(nodeToReplace, replacementNode))
+        });
+    }
+
+    equals(otherNode) {
+        if (this.type !== otherNode.type) return false;
+        if (JSON.stringify(this.data) !== JSON.stringify(otherNode.data)) return false;
+        if (this.children.length !== otherNode.children.length) return false;
+        for (let i = 0; i < this.children.length; i++) {
+            if (!this.children[i].equals(otherNode.children[i])) return false;
+        }
+        return true;
+    }
+
+
     stringify() {
         return Umform.ExprNode.stringify(this);
     }
@@ -36,6 +58,21 @@ Umform.ExprNode = class ExprNode {
 
     getAllNodes() {
         return [this, ...this.getAllChildren()];
+    }
+
+    foreach(callback) {
+        callback(this);
+        this.children.forEach(c => c.foreach(callback));
+    }
+
+    findAll(condition) {
+        const result = [];
+        this.foreach(node => {
+            if (condition(node)) {
+                result.push(node);
+            }
+        });
+        return result;
     }
 
     // Prüfen, ob der Baum Zyklen enthält
@@ -172,6 +209,13 @@ Umform.ExprNode.parse = function (str) {
     }
 
     function parseExpression() {
+        skipWs();
+
+        // Capture erkennen
+        if (peek() === "<") {
+            return parseCapture();
+        }
+
         const type = parseIdentifier();
         const data = parseData();
         const children = parseChildren();
@@ -180,6 +224,26 @@ Umform.ExprNode.parse = function (str) {
             type,
             data,
             children
+        });
+    }
+
+    function parseCapture() {
+        consume("<");
+        const name = parseIdentifier();
+        consume(">");
+
+        skipWs();
+
+        let variadic = false;
+        if (str.slice(i, i + 3) === "...") {
+            i += 3;
+            variadic = true;
+        }
+
+        return new Umform.ExprNode({
+            type: "__capture__",
+            data: { name, variadic },
+            children: []
         });
     }
 
@@ -193,6 +257,9 @@ Umform.ExprNode.parse = function (str) {
     return result;
 };
 
+function p(x) {
+    return Umform.ExprNode.parse(x);
+}
 
 Umform.ExprNode.stringify = function(node) {
     if (!node) return "";
@@ -212,6 +279,55 @@ Umform.ExprNode.stringify = function(node) {
     return str;
 };
 
+Umform.TypeDefinition = class {
+    constructor() {
+
+    }
+    getName() {
+        throw new Error("implement me");
+    }
+    getPrecedence() {
+        throw new Error("implement me");
+    }
+    createBox(exprNodeUI, node, parentPrec) {
+        throw new Error("implement me");
+    }
+}
+
+Umform.UNKNOWN_TYPE_DEFINITION = new class extends Umform.TypeDefinition {
+    getName() {
+        return "UNKNOWN_TYPE";
+    }   
+    getPrecedence() {
+        return 0;
+    }
+    createBox(exprNodeUI, node, parentPrec) {
+        const textbox = new TextBox("<?>");
+        return {box:textbox, nodeContentElements:[textbox]}
+    }
+}();
+
+Umform.TYPE_REGISTRY = new Map();
+Umform.registerType = function(typeDef) {
+    Umform.TYPE_REGISTRY.set(typeDef.getName(), typeDef);
+}
+Umform.getTypeDefinition = function(typeName) {
+    return Umform.TYPE_REGISTRY.get(typeName) || Umform.UNKNOWN_TYPE_DEFINITION;
+}
+
+Umform.RULES = new Map();
+Umform.AUTO_RULES = new Map();
+
+Umform.registerRule = function(rule) {
+    Umform.RULES.set(rule.name, rule);
+    if (rule.isAutoRule) {
+        Umform.AUTO_RULES.set(rule.name, rule);
+    }
+}
+
+Umform.getRule = function(ruleName) {
+    return Umform.RULES.get(ruleName);
+}
 
 // basic operationen: 
 // sum(a,b,c,...); subtraktion gibt es nicht, a-b --> sum(a,neg(b))
@@ -226,324 +342,225 @@ Umform.ExprNode.stringify = function(node) {
 // forall(var, expression)
 
 
-
-
-const PRECEDENCE = {
-    "number": 100,
-    "var": 100,
-    "op": 100,
-    "neg": 90,
-    "power": 80,
-    "fraction": 70,
-    "product": 60,
-    "sum": 50,
-    "equals": 40
-};
-
-
-Umform.ExprNodeUI = class {
-
-    constructor(node, controller) {
-        this.node = node;
-        this.controller = controller;
-
-        this.svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-        this.svg.style.overflow = "visible";
-
-        this.ctx = document.createElement("canvas").getContext("2d");
-
-        this.selectedNode = null;
-
-        this.render();
+Umform.Rule = class {
+    constructor({name, title, matchPattern, replacementPattern, matchCaptures, freeCaptures=[], selectOrder=[], isAutoRule=false}) {
+        this.name = name;
+        this.title = title;
+        this.matchPattern = matchPattern;
+        this.replacementPattern = replacementPattern;
+        this.matchCaptures = matchCaptures;
+        this.freeCaptures = freeCaptures;
+        this.selectOrder = selectOrder;
+        this.isAutoRule = isAutoRule;
     }
 
-    // ---------- Public ----------
-
-    render() {
-        this.svg.innerHTML = "";
-
-        const box = this.nodeToBox(this.node);
-        box.layout(this.ctx);
-
-        const padding = 10;
-        const baseline = padding + box.height;
-
-        box.render(this.svg, padding, baseline);
-
-        this.svg.setAttribute("width", box.width + padding * 2);
-        this.svg.setAttribute("height", box.height + box.depth + padding * 2);
+    matches(expr) {
+        return matchAll(this.matchPattern, expr).length > 0;
     }
 
-    get element() {
-        return this.svg;
+    getSelectableNodes(expr, initialBindings, selectOrderIndex) {
+        let selectableNodes = new Set();
+        let nextSelectionPattern = this.selectOrder[selectOrderIndex];
+
+        function calcSelectableNodesRecursive(n) {
+            if (matchAll(nextSelectionPattern,n,initialBindings).length > 0) {
+                selectableNodes.add(n);
+            }
+            for (let child of n.children) {
+                calcSelectableNodesRecursive(child);
+            }
+        }
+
+        calcSelectableNodesRecursive(expr);
+        return selectableNodes; 
     }
 
-    // ---------- Core Conversion ----------
+    getMatches(expr, initialBindings) {
+        return matchAll(this.matchPattern, expr, initialBindings);
+    }
 
-    nodeToBox(node, parentPrec = 0) {
-        const nodePrec = PRECEDENCE[node.type] || 0;
+    apply(expr, matchIndex = 0, freeCaptureValues = new Map(), initialMatches) {
+        /*for (let freeCaptureName of this.freeCaptures) {
+            if (!freeCaptureValues.has(freeCaptureName)) {
+                freeCaptureValues.set(freeCaptureName, Umform.ExprNode.parse("_"));
+            }
+        }*/
+        const matches = this.getMatches(expr, initialMatches);
+        const binding = matches[matchIndex];
+        if (!binding) {
+            throw new Error("No match at index " + matchIndex);
+        }
+        for (let [key, value] of freeCaptureValues) {
+            if (!this.freeCaptures.includes(key)) {
+                throw new Error("Capture " + key + " is not a free capture of this rule");
+            }
+            if (binding.has(key)) {
+                throw new Error("Capture " + key + " is already bound in the match");
+            }
+            binding.set(key, value);
+        }
+        return applyReplacement(binding, this.replacementPattern);
+    }
+}
 
-        let box;
-        let nodeContentElements = [];// <--- das hier muss fill unterstützen
+function matchAll(pattern, expr, initialBindings = new Set([new Map()])) {
+    function matchNode(pn, en, bindings) {
+        if (pn.type === "__capture__") {
+            
+            if (pn.data.variadic) {
+                throw new Error("Variadic capture not allowed here (must be in children)");
+            }
 
+            let allowedBindings = new Set();
 
-        let creator = NodeBoxCreators[node.type] || NodeBoxCreators.DEFAULT;
-        let result = creator(this, node, nodePrec);
-        box = result.box;
-        nodeContentElements = result.nodeContentElements;
+            for (let b of bindings) {
+                if (b.has(pn.data.name)) {
+                    if (b.get(pn.data.name).equals(en)) {
+                        allowedBindings.add(b);
+                    }
+                } else {
+                    let bNew = new Map(b);
+                    bNew.set(pn.data.name, en); // capture belegen
+                    allowedBindings.add(bNew);
+                }
+            }
+            return allowedBindings;
+        }
+
+        if (pn.type !== en.type) {
+            return new Set(); // unterschiedliche Typen können nicht gematcht werden
+        }
         
-
-        // Automatische Klammern, falls Kind niedriger bindend als Parent
-        if (node._forceBrackets || (nodePrec < parentPrec)) {
-            box = new ParenthesisBox(box);
+        if (JSON.stringify(pn.data) !== JSON.stringify(en.data)) {
+            return new Set(); // knoten mit unterschiedlichen Daten sind verschieden
         }
 
-        // Wrappen für Clickable
-        return new ClickableBox(box, node, this.controller, nodeContentElements);
-    }
-};
-
-
-// todo auslagern
-const NodeBoxCreators = {}
-
-NodeBoxCreators.var = function(exprNodeUI, node, nodePrec) {
-    const textbox = new TextBox(String(node.data));
-    return {box:textbox, nodeContentElements:[textbox]}
-}
-
-NodeBoxCreators.number = function(exprNodeUI, node, nodePrec) {
-    const textbox = new TextBox(String(node.data));
-    return {box:textbox, nodeContentElements:[textbox]}
-}
-
-NodeBoxCreators.neg = function(exprNodeUI, node, nodePrec) {
-    const minusbox = new TextBox("−")
-    box = new HBox([
-                    minusbox,
-                    exprNodeUI.nodeToBox(node.children[0], nodePrec)
-                ], 2);
-
-    return {box:box, nodeContentElements:[minusbox]}
-}
-
-function joinInfix(exprNodeUI, children, symbol, parentPrec) {
-    const boxes = [];
-    const symbols = [];
-
-    children.forEach((c, i) => {
-        if (i > 0) {
-            let symbolbox = new OperatorBox(symbol);
-            boxes.push(symbolbox);
-            symbols.push(symbolbox);
-        }
-        // Kind bekommt aktuelle Präzedenz
-         boxes.push(exprNodeUI.nodeToBox(c, parentPrec));
-    });
-
-    return {box:new HBox(boxes, 0), nodeContentElements:symbols};
-}
-
-NodeBoxCreators.sum = function(exprNodeUI, node, nodePrec) {
-    return joinInfix(exprNodeUI,node.children, "+", nodePrec);
-}
-
-NodeBoxCreators.product = function(exprNodeUI, node, nodePrec) {
-    return joinInfix(exprNodeUI,node.children, "·", nodePrec);
-}
-
-NodeBoxCreators.power = function(exprNodeUI, node, nodePrec) {
-    const box = new SuperScriptBox(
-        exprNodeUI.nodeToBox(node.children[0], nodePrec),
-        exprNodeUI.nodeToBox(node.children[1], nodePrec)
-    );
-    return {box:box, nodeContentElements:[]};
-}
-
-NodeBoxCreators.fraction = function(exprNodeUI, node, nodePrec) {
-    const box = new FractionBox(
-                    exprNodeUI.nodeToBox(node.children[0], nodePrec),
-                    exprNodeUI.nodeToBox(node.children[1], nodePrec)
-                );
-    return {box:box, nodeContentElements:[]};
-}
-
-NodeBoxCreators.equals = function(exprNodeUI, node, nodePrec) {
-    const equalsbox = new TextBox(" = ");
-    const box = new HBox([
-                    exprNodeUI.nodeToBox(node.children[0], nodePrec),
-                    equalsbox,
-                    exprNodeUI.nodeToBox(node.children[1], nodePrec)
-                ]);
-    return {box:box, nodeContentElements:[equalsbox]};
-}
-
-NodeBoxCreators.DEFAULT = function(exprNodeUI, node, nodePrec) {
-    const textbox = new TextBox("<?>");
-    return {box:textbox, nodeContentElements:[textbox]}
-}
-
-
-
-class ExprViewer {
-    constructor(exprNodeUI, width = 600, height = 400) {
-        this.exprNodeUI = exprNodeUI;
-
-        this.width = width;
-        this.height = height;
-
-        // SVG Setup
-        this.svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-        this.svg.setAttribute("width", width);
-        this.svg.setAttribute("height", height);
-        this.svg.style.border = "1px solid #aaa";
-        this.svg.style.background = "#fff";
-        this.svg.style.overflow = "hidden";
-
-        // Container-G für transform (Zoom & Pan)
-        this.container = document.createElementNS("http://www.w3.org/2000/svg", "g");
-        this.svg.appendChild(this.container);
-
-        this.container.appendChild(exprNodeUI.element);
-
-        // Zoom & Pan state
-        this.scale = 1;
-        this.offsetX = 0;
-        this.offsetY = 0;
-
-        this.isPanning = false;
-        this.panStart = { x: 0, y: 0 };
-        this.offsetStart = { x: 0, y: 0 };
-
-        this.updateTransform();
-        this.attachEvents();
+        return matchChildren(pn.children, en.children, bindings);
     }
 
-    get element() {
-        return this.svg;
-    }
-
-    updateTransform() {
-        this.container.setAttribute(
-            "transform",
-            `translate(${this.offsetX},${this.offsetY}) scale(${this.scale})`
-        );
-    }
-
-    attachEvents() {
-        // Zoom mit Mausrad
-        this.svg.addEventListener("wheel", (e) => {
-            e.preventDefault();
-
-            const delta = -e.deltaY; // normales Mausrad
-            const zoomFactor = 1.1;
-
-            const rect = this.svg.getBoundingClientRect();
-            const cx = e.clientX - rect.left;
-            const cy = e.clientY - rect.top;
-
-            let scaleFactor = delta > 0 ? zoomFactor : 1 / zoomFactor;
-
-            // Zoom um Mauszeiger
-            this.offsetX = cx - scaleFactor * (cx - this.offsetX);
-            this.offsetY = cy - scaleFactor * (cy - this.offsetY);
-            this.scale *= scaleFactor;
-
-            this.updateTransform();
-        });
-
-        // Pan mit mittlerer Maustaste
-        this.svg.addEventListener("mousedown", (e) => {
-            if (e.button === 1 || (e.button === 0 && e.shiftKey)) {
-                e.preventDefault();
-                this.isPanning = true;
-                this.panStart = { x: e.clientX, y: e.clientY };
-                this.offsetStart = { x: this.offsetX, y: this.offsetY };
+    function matchChildren(pChildren, eChildren, bindings) {
+        function matchChildrenStep(pIndex, eIndex, currentBindings) {
+            if (pIndex === pChildren.length && eIndex === eChildren.length) {
+                return currentBindings;
             }
-        });
 
-        window.addEventListener("mousemove", (e) => {
-            if (this.isPanning) {
-                const dx = e.clientX - this.panStart.x;
-                const dy = e.clientY - this.panStart.y;
-
-                this.offsetX = this.offsetStart.x + dx;
-                this.offsetY = this.offsetStart.y + dy;
-                this.updateTransform();
+            if (pIndex === pChildren.length) {
+                return new Set(); // zu wenige Kinder im Pattern
             }
-        });
 
-        window.addEventListener("mouseup", (e) => {
-            this.isPanning = false;
-        });
+            let pChild = pChildren[pIndex];
+            if (pChild.type === "__capture__" && pChild.data.variadic) {
+                let newBindings = new Set();
+                for (let b of currentBindings) {
+                    if (b.has(pChild.data.name)) {
+                        let boundNodes = b.get(pChild.data.name);
+                        if (equalsNodes(boundNodes, eChildren.slice(eIndex,eIndex+boundNodes.length))) {
+                            newBindings = newBindings.union(matchChildrenStep(pIndex + 1, eIndex + boundNodes.length, new Set([b])));
+                        }
+                    } else {
+                        for (let len = 0; len <= eChildren.length - eIndex; len++) {
+                            let bNew = new Map(b);
+                            bNew.set(pChild.data.name, eChildren.slice(eIndex,eIndex+len));
+                            newBindings = newBindings.union(matchChildrenStep(pIndex + 1, eIndex + len, new Set([bNew])));
+                        }
+                    }
+                }
+                return newBindings;
+            }
+            
+            if (eIndex === eChildren.length) {
+                return new Set(); // zu wenige Kinder im Ausdruck
+            }
+
+            let newBindings = matchNode(pChild, eChildren[eIndex], currentBindings);
+            if (newBindings.size === 0) {
+                return newBindings; // aktuelles Kind passt nicht, daher kein Match
+            }
+            return matchChildrenStep(pIndex + 1, eIndex + 1, newBindings);
+        }
+        return matchChildrenStep(0, 0, bindings);
     }
+
+    function equalsNodes(nodes1, nodes2) {
+        if (nodes1.length !== nodes2.length) return false;
+        for (let i = 0; i < nodes1.length; i++) {
+            if (!nodes1[i].equals(nodes2[i])) return false;
+        }
+        return true;
+    }
+    return Array.from(matchNode(pattern, expr, new Set(initialBindings)));
 }
 
-class NodeStateController {
-    constructor() {
-        // key = node id oder Pfad, value = {selected, selectable, highlighted}
-        this.nodes = new Map();
-
-        // callback(node, currentState)
-        this.onNodeClick = null;
-    }
-
-    register(node, box) {
-        const key = this.getKey(node);
-        if (!this.nodes.has(key)) {
-            this.nodes.set(key, {
-                selected: false,
-                selectable: true,
-                highlighted: false,
-                box: box
-            });
+function applyReplacement(binding, replacementPattern) {
+    function replaceNode(currentBinding, node) {
+        if (node.type === "__capture__") {
+            if (currentBinding.has(node.data.name)) {
+                if (node.data.variadic) {
+                    throw new Error("Variadic capture not allowed here (must be in children)");
+                }
+                return currentBinding.get(node.data.name).clone();
+            }
         }
+
+        return new Umform.ExprNode({
+            type: node.type,
+            data: structuredClone(node.data),
+            children: replaceChildren(currentBinding, node.children)
+        });
     }
 
-    getKey(node) {
-        // Wir können Pfad oder Referenz nutzen
-        return node._uid || (node._uid = Symbol());
-    }
+    function replaceChildren(currentBinding, children) {
+        let childrenReplaced = [];
+        for (let child of children) {
+            if (child.type === "__capture__" && child.data.variadic) {
+                if (currentBinding.has(child.data.name)) {
+                    childrenReplaced.push(...currentBinding.get(child.data.name).map(n => n.clone()));
+                    continue;
+                }
+            }
 
-    click(node) {
-        const key = this.getKey(node);
-        const state = this.nodes.get(key);
-        if (!state || !state.selectable) return;
+            if (child.type === "__map__") {
+                let captureV = child.children[0];
+                let captureI = child.children[1];
+                let expr = child.children[2];
+                if (currentBinding.has(captureV.data.name)) {
+                    let boundNodes = currentBinding.get(captureV.data.name);
+                    let innerBinding = new Map(currentBinding);
+                    for (let n of boundNodes) {
+                        innerBinding.set(captureI.data.name, n);
+                        childrenReplaced.push(replaceNode(innerBinding, expr));
+                    }
+                    continue;
+                }
+            }
 
-        if (this.onNodeClick) {
-            this.onNodeClick(node, state);
+            childrenReplaced.push(replaceNode(currentBinding, child));
         }
+        return childrenReplaced;
     }
 
-    setSelected(node, value, stroke = null, fill = null, fg = null) {
-        const key = this.getKey(node);
-        const state = this.nodes.get(key);
-        if (!state) return;
-        state.selected = value;
-        state.box.setSelectedColor(stroke, fill, fg);
-        state.box.updateVisual();
-    }
-
-    setHighlighted(node, value, stroke = null, fill = null, fg = null) {
-        const key = this.getKey(node);
-        const state = this.nodes.get(key);
-        if (!state) return;
-        state.highlighted = value;
-        state.box.setHighlightedColor(stroke, fill);
-        state.box.updateVisual();
-    }
-
-    setSelectable(node, value, stroke = null, fill = null, fg = null) {
-        const key = this.getKey(node);
-        const state = this.nodes.get(key);
-        if (!state) return;
-        state.selectable = value;
-        //state.box.setSelectableColor(stroke, fill, fg);
-        state.box.updateVisual();
-    }
-
-    getState(node) {
-        const key = this.getKey(node);
-        return this.nodes.get(key);
-    }
+    return replaceNode(binding,replacementPattern);
 }
+
+
+
+
+/* precedence table (höherer Wert = höhere Präzedenz):
+100: atomare Ausdrücke (Zahlen, Variablen, Konstanten)
+
+90: unäre Operationen (Negation, logische Negation)
+
+83: Potenzierung
+82: Brüche
+81: Produkt
+80: Summe
+
+71: Schnittmenge
+70: Vereinigunsmenge
+
+60: Gleichungen
+
+52 Und
+51 Oder
+50 Implikation, Äquivalenz
+*/

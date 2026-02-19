@@ -17,6 +17,11 @@ class Box {
         const box = new ScaledBox(this, factor);
         return box;
     }
+
+    setColor(color) {
+        
+    }
+
 }
 
 class TextBox extends Box {
@@ -25,6 +30,9 @@ class TextBox extends Box {
         this.text = text;
         this.fontSize = fontSize;
         this.fontFamily = fontFamily;
+
+        this.color = "black";
+        this.textElement = null;
     }
 
     layout(ctx) {
@@ -40,15 +48,23 @@ class TextBox extends Box {
     }
 
     render(svg, x, baselineY) {
-        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        text.setAttribute("x", x);
-        text.setAttribute("y", baselineY);
-        text.setAttribute("font-size", this.fontSize);
-        text.setAttribute("font-family", this.fontFamily);
-        text.setAttribute("dominant-baseline", "alphabetic");
-        text.textContent = this.text;
+        this.textElement = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        this.textElement.setAttribute("x", x);
+        this.textElement.setAttribute("y", baselineY);
+        this.textElement.setAttribute("font-size", this.fontSize);
+        this.textElement.setAttribute("font-family", this.fontFamily);
+        this.textElement.setAttribute("dominant-baseline", "alphabetic");
+        this.textElement.setAttribute("fill", this.color);
+        this.textElement.textContent = this.text;
 
-        svg.appendChild(text);
+        svg.appendChild(this.textElement);
+    }
+
+    setColor(color) {
+        this.color = color;
+        if (this.textElement) {
+            this.textElement.setAttribute("fill", color);
+        }
     }
 }
 
@@ -136,6 +152,61 @@ class VBox extends Box {
     }
 }
 
+class RectBox extends Box {
+    constructor(width, height, options = {}) {
+        super();
+        this.width = width;
+        this.height = height*3/4;
+        this.depth = height / 4; // Rechteck liegt komplett oberhalb der Baseline
+
+        this.rectHeight = height;
+
+        this.fill = options.fill || "none";
+        this.stroke = options.stroke || "black";
+        this.strokeWidth = options.strokeWidth || 1;
+
+        this.rectElement = null;
+    }
+
+    layout(ctx) {
+        // feste Maße – nichts zu berechnen
+    }
+
+    render(svg, x, baselineY) {
+
+        const y = baselineY - this.height;
+
+        this.rectElement = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "rect"
+        );
+
+        this.rectElement.setAttribute("x", x);
+        this.rectElement.setAttribute("y", y);
+        this.rectElement.setAttribute("width", this.width);
+        this.rectElement.setAttribute("height", this.rectHeight);
+        this.rectElement.setAttribute("fill", this.fill);
+        this.rectElement.setAttribute("stroke", this.stroke);
+        this.rectElement.setAttribute("stroke-width", this.strokeWidth);
+
+        svg.appendChild(this.rectElement);
+    }
+
+    setColor(color) {
+        this.stroke = color;
+        if (this.rectElement) {
+            this.rectElement.setAttribute("stroke", color);
+        }
+    }
+
+    setFill(color) {
+        this.fill = color;
+        if (this.rectElement) {
+            this.rectElement.setAttribute("fill", color);
+        }
+    }
+}
+
 class SuperScriptBox extends Box {
     constructor(base, script, scriptScale = 0.7) {
         super();
@@ -180,6 +251,9 @@ class FractionBox extends Box {
         this.denominator = denominator;
         this.gap = gap;
         this.rule = rule;
+
+        this.lineElement = null;
+        this.color = "black";
     }
 
     layout(ctx) {
@@ -211,19 +285,26 @@ class FractionBox extends Box {
 
         this.numerator.render(svg, numX, numY);
 
-        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-        line.setAttribute("x1", x);
-        line.setAttribute("x2", x + this.width);
-        line.setAttribute("y1", baselineY);
-        line.setAttribute("y2", baselineY);
-        line.setAttribute("stroke", "black");
-        line.setAttribute("stroke-width", this.rule);
-        svg.appendChild(line);
+        this.lineElement = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        this.lineElement.setAttribute("x1", x);
+        this.lineElement.setAttribute("x2", x + this.width);
+        this.lineElement.setAttribute("y1", baselineY);
+        this.lineElement.setAttribute("y2", baselineY);
+        this.lineElement.setAttribute("stroke", this.color);
+        this.lineElement.setAttribute("stroke-width", this.rule);
+        svg.appendChild(this.lineElement);
 
         const denX = centerX - this.denominator.width / 2;
         const denY = baselineY + this.gap + this.denominator.height;
 
         this.denominator.render(svg, denX, denY);
+    }
+    
+    setColor(color) {
+        this.color = color;
+        if (this.lineElement) {
+            this.lineElement.setAttribute("stroke", color);
+        }
     }
 }
 
@@ -271,38 +352,74 @@ class OperatorBox extends Box {
     }
 
     render(svg, x, baselineY) {
-        const centerX = x + this.width / 2;
+        this.textBox.render(svg, x + this.spacing, baselineY);
+    }
 
-        const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        text.setAttribute("x", centerX);
-        text.setAttribute("y", baselineY);
-        text.setAttribute("font-size", this.fontSize);
-        text.setAttribute("font-family", "serif");
-        text.setAttribute("text-anchor", "middle");
-        text.setAttribute("dominant-baseline", "alphabetic");
-        text.textContent = this.symbol;
-
-        svg.appendChild(text);
+    setColor(color) {
+        this.textBox.setColor(color);
     }
 }
 
-class ClickableBox extends Box {
+class ParenthesisBox extends Box {
+    constructor(inner) {
+        super();
+        this.inner = inner;
+        this.left = new TextBox("(");
+        this.right = new TextBox(")");
+    }
+
+    layout(ctx) {
+        this.inner.layout(ctx);
+        this.left.layout(ctx);
+        this.right.layout(ctx);
+
+        this.width = this.left.width + this.inner.width + this.right.width;
+        this.height = Math.max(this.left.height, this.inner.height, this.right.height);
+        this.depth = Math.max(this.left.depth, this.inner.depth, this.right.depth);
+    }
+
+    render(svg, x, baselineY) {
+        this.left.render(svg, x, baselineY);
+        this.inner.render(svg, x + this.left.width, baselineY);
+        this.right.render(svg, x + this.left.width + this.inner.width, baselineY);
+    }
+
+    setColor(color) {
+        this.left.setColor(color);
+        this.right.setColor(color);
+    }
+}
+
+
+
+
+
+class InteractiveBox extends Box {
 
     constructor(inner, node, controller, nodeContentElements, colors = {}) {
         super();
         this.inner = inner;
         this.node = node;
         this.controller = controller;
-        //this.nodeContentElements = nodeContentElements;
+        this.nodeContentElements = nodeContentElements;
         this.childrenElements = [];
 
         this.colors = Object.assign({
-            selectedStroke: "red",
-            selectedFill: "rgba(255,0,0,0.08)",
-            hoverStroke: "rgba(0,0,0,0.4)",
-            hoverFill: "rgba(0,0,0,0.04)",
-            highlightedStroke: "orange",
-            highlightedFill: "rgba(255,165,0,0.1)"
+            defaultStroke: "transparent",
+            defaultBG: "transparent",
+            defaultFG: "rgb(197, 197, 197)",
+            selectableStroke: "transparent",
+            selectableBG: "transparent",
+            selectableFG: "rgb(0, 0, 0)",
+            selectedStroke: "rgb(195, 255, 200)",
+            selectedBG: "rgba(0, 255, 21, 0.08)",
+            selectedFG: "rgb(0, 220, 29)",
+            hoverStroke: "transparent",
+            hoverBG: "rgba(84, 5, 255, 0.04)",
+            hoverFG: "rgb(0, 26, 255)",
+            highlightedStroke: "rgb(251, 255, 0)",
+            highlightedBG: "rgb(253, 255, 205)",
+            highlightedFG: "rgb(255, 136, 0)"
         }, colors);
 
         this.hovered = false;
@@ -353,24 +470,40 @@ class ClickableBox extends Box {
         svg.appendChild(group);
 
         this._rect = rect;
+        this.updateVisual();
+    }
+
+    setColor(color) {
+        this.colors.defaultFG = color;
+        this.updateVisual();
     }
 
  // -------- Farben dynamisch setzen --------
-    setSelectedColor(stroke, fill) {
+    setSelectedColor(stroke, bg, fg) {
         this.colors.selectedStroke = stroke ?? this.colors.selectedStroke;
-        this.colors.selectedFill = fill ?? this.colors.selectedFill;
+        this.colors.selectedBG = bg ?? this.colors.selectedBG;
+        this.colors.selectedFG = fg ?? this.colors.selectedFG;
         this.updateVisual();
     }
 
-    setHoverColor(stroke, fill) {
+    setHoverColor(stroke, bg, fg) {
         this.colors.hoverStroke = stroke ?? this.colors.hoverStroke;
-        this.colors.hoverFill = fill ?? this.colors.hoverFill;
+        this.colors.hoverBG = bg ?? this.colors.hoverBG;
+        this.colors.hoverFG = fg ?? this.colors.hoverFG;
         this.updateVisual();
     }
 
-    setHighlightedColor(stroke, fill) {
+    setHighlightedColor(stroke, bg, fg) {
         this.colors.highlightedStroke = stroke ?? this.colors.highlightedStroke;
-        this.colors.highlightedFill = fill ?? this.colors.highlightedFill;
+        this.colors.highlightedBG = bg ?? this.colors.highlightedBG;
+        this.colors.highlightedFG = fg ?? this.colors.highlightedFG;
+        this.updateVisual();
+    }
+
+    setSelectableColor(stroke, bg, fg) {
+        this.colors.selectableStroke = stroke ?? this.colors.selectableStroke;
+        this.colors.selectableBG = bg ?? this.colors.selectableBG;
+        this.colors.selectableFG = fg ?? this.colors.selectableFG;
         this.updateVisual();
     }
 
@@ -378,48 +511,34 @@ class ClickableBox extends Box {
         const state = this.controller.getState(this.node);
         if (!state) return;
 
-        let stroke = "none";
-        let fill = "transparent";
+        let stroke = this.colors.defaultStroke;
+        let bg = this.colors.defaultBG;
+        let fg = this.colors.defaultFG;
 
         if (state.selected) {
             stroke = this.colors.selectedStroke;
-            fill = this.colors.selectedFill;
+            bg = this.colors.selectedBG;
+            fg = this.colors.selectedFG;
         } else if (state.highlighted) {
             stroke = this.colors.highlightedStroke;
-            fill = this.colors.highlightedFill;
+            bg = this.colors.highlightedBG;
+            fg = this.colors.highlightedFG;
         } else if (this.hovered && state.selectable) {
             stroke = this.colors.hoverStroke;
-            fill = this.colors.hoverFill;
+            bg = this.colors.hoverBG;
+            fg = this.colors.hoverFG;
+        } else if (state.selectable) {
+            stroke = this.colors.selectableStroke;
+            bg = this.colors.selectableBG;
+            fg = this.colors.selectableFG;
         }
 
         this._rect.setAttribute("stroke", stroke);
-        this._rect.setAttribute("fill", fill);
+        this._rect.setAttribute("fill", bg);
         this._rect.setAttribute("stroke-width", (state.selected || state.highlighted) ? 2 : 1);
+
+        for (const elem of this.nodeContentElements) {
+            elem.setColor(fg);
+        }
     }
 }
-
-class ParenthesisBox extends Box {
-    constructor(inner) {
-        super();
-        this.inner = inner;
-        this.left = new TextBox("(");
-        this.right = new TextBox(")");
-    }
-
-    layout(ctx) {
-        this.inner.layout(ctx);
-        this.left.layout(ctx);
-        this.right.layout(ctx);
-
-        this.width = this.left.width + this.inner.width + this.right.width;
-        this.height = Math.max(this.left.height, this.inner.height, this.right.height);
-        this.depth = Math.max(this.left.depth, this.inner.depth, this.right.depth);
-    }
-
-    render(svg, x, baselineY) {
-        this.left.render(svg, x, baselineY);
-        this.inner.render(svg, x + this.left.width, baselineY);
-        this.right.render(svg, x + this.left.width + this.inner.width, baselineY);
-    }
-}
-

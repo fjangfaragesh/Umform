@@ -1,0 +1,556 @@
+
+// not
+
+Umform.registerRule(new Umform.Rule({
+    name: "not.not",
+    title: "Double Negation",
+    matchPattern: p('not(not(<x>))'),
+    replacementPattern: p('<x>'),
+    matchCaptures: ['x'],
+    freeCaptures: [],
+    selectOrder: [],
+    isAutoRule: false
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "not.false",
+    title: "Negation of False",
+    matchPattern: p('not(id{"false"})'),
+    replacementPattern: p('id{"true"}'),
+    matchCaptures: [],
+    freeCaptures: [],
+    selectOrder: [],
+    isAutoRule: false
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "not.true",
+    title: "Negation of True",
+    matchPattern: p('not(id{"true"})'),
+    replacementPattern: p('id{"false"}'),
+    matchCaptures: [],
+    freeCaptures: [],
+    selectOrder: [],
+    isAutoRule: false
+}));
+
+// and
+
+Umform.registerRule(new Umform.Rule({
+    name: "and.empty",
+    title: "Empty And Equals True",
+    matchPattern: p('and()'),
+    replacementPattern: p('id{"true"}'),
+    matchCaptures: [],
+    freeCaptures: [],
+    selectOrder: [],
+    isAutoRule: true
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "and.single",
+    title: "Single And Factor Simplification",
+    matchPattern: p('and(<x>)'),
+    replacementPattern: p('<x>'),
+    matchCaptures: ["x"],
+    freeCaptures: [],
+    selectOrder: [p('<x>')],
+    isAutoRule: true
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "and.commutative",
+    title: "Commutativity of And",
+    matchPattern: p('and(<left>...,<a>,<middle>...,<b>,<right>...)'),
+    replacementPattern: p('and(<left>...,<b>,<middle>...,<a>,<right>...)'),
+    matchCaptures: ["a","b","left","middle","right"],
+    freeCaptures: [],
+    selectOrder: [p('<a>'), p('<b>')],
+    isAutoRule: false
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "and.associative",
+    title: "Associativity of And",
+    matchPattern: p('and(<left>...,and(<x>...),<right>...)'),
+    replacementPattern: p('and(<left>...,<x>...,<right>...)'),
+    matchCaptures: ["x","left","right"],
+    freeCaptures: [],
+    selectOrder: [p('and(<x>...)')],
+    isAutoRule: true
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "and.idempotent",
+    title: "Idempotency of And",
+    matchPattern: p('and(<left>...,<x>,<middle>...,<x>,<right>...)'),
+    replacementPattern: p('and(<left>...,<x>,<middle>...,<right>...)'),
+    matchCaptures: ["x","left","middle","right"],
+    freeCaptures: [],
+    selectOrder: [p('<x>')],
+    isAutoRule: false
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "and.contradiction",
+    title: "Contradiction of And",
+    matchPattern: p('and(<left>...,<x>,<middle>...,not(<x>),<right>...)'),
+    replacementPattern: p('id{"false"}'),
+    matchCaptures: ["x","left","middle","right"],
+    freeCaptures: [],
+    selectOrder: [p('<x>')],
+    isAutoRule: false
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "and.contradiction2",
+    title: "Contradiction of And",
+    matchPattern: p('and(<left>...,not(<x>),<middle>...,<x>,<right>...)'),
+    replacementPattern: p('id{"false"}'),
+    matchCaptures: ["x","left","middle","right"],
+    freeCaptures: [],
+    selectOrder: [p('<x>')],
+    isAutoRule: false
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "and.absorbtion",
+    title: "Absorption of And",
+    matchPattern: p('and(<left>...,<x>,<middle>...,or(<rightleft>...,<x>,<rightright>...),<right>...)'),
+    replacementPattern: p('and(<left>...,<x>,<middle>...,<right>...)'),
+    matchCaptures: ["x","left","middle","rightleft","rightright","right"],
+    freeCaptures: [],
+    selectOrder: [p('or(<rightleft>...,<x>,<rightright>...)'),p('<x>')],
+    isAutoRule: false
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "and.absorbtion2",
+    title: "Absorption of And",
+    matchPattern: p('and(<left>...,or(<rightleft>...,<x>,<rightright>...),<middle>...,<x>,<right>...)'),
+    replacementPattern: p('and(<left>...,<middle>...,<x>,<right>...)'),
+    matchCaptures: ["x","left","middle","rightleft","rightright","right"],
+    freeCaptures: [],
+    selectOrder: [p('or(<rightleft>...,<x>,<rightright>...)'),p('<x>')],
+    isAutoRule: false
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "and.neutrality",
+    title: "Neutrality of And",
+    matchPattern: p('and(<left>...,id{"true"},<right>...)'),
+    replacementPattern: p('and(<left>...,<right>...)'),
+    matchCaptures: ["left","right"],
+    freeCaptures: [],
+    selectOrder: ['id{"true"}'],
+    isAutoRule: false
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "and.falsification",
+    title: "Falsification of And",
+    matchPattern: p('and(<left>...,id{"false"},<right>...)'),
+    replacementPattern: p('id{"false"}'),
+    matchCaptures: ["left","right"],
+    freeCaptures: [],
+    selectOrder: [],
+    isAutoRule: false
+}));
+
+// or
+
+Umform.registerRule(new Umform.Rule({
+    name: "or.empty",
+    title: "Empty Or Equals False",
+    matchPattern: p('or()'),
+    replacementPattern: p('id{"false"}'),
+    matchCaptures: [],
+    freeCaptures: [],
+    selectOrder: [],
+    isAutoRule: true
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "or.single",
+    title: "Single Or Factor Simplification",
+    matchPattern: p('or(<x>)'),
+    replacementPattern: p('<x>'),
+    matchCaptures: ["x"],
+    freeCaptures: [],
+    selectOrder: [p('<x>')],
+    isAutoRule: true
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "or.commutative",
+    title: "Commutativity of Or",
+    matchPattern: p('or(<left>...,<a>,<middle>...,<b>,<right>...)'),
+    replacementPattern: p('or(<left>...,<b>,<middle>...,<a>,<right>...)'),
+    matchCaptures: ["a","b","left","middle","right"],
+    freeCaptures: [],
+    selectOrder: [p('<a>'), p('<b>')],
+    isAutoRule: false
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "or.associative",
+    title: "Associativity of Or",
+    matchPattern: p('or(<left>...,or(<x>...),<right>...)'),
+    replacementPattern: p('or(<left>...,<x>...,<right>...)'),
+    matchCaptures: ["x","left","middle","right"],
+    freeCaptures: [],
+    selectOrder: [p('or(<x>...)')],
+    isAutoRule: true
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "or.idempotent",
+    title: "Idempotency of Or",
+    matchPattern: p('or(<left>...,<x>,<middle>...,<x>,<right>...)'),
+    replacementPattern: p('or(<left>...,<x>,<middle>...,<right>...)'),
+    matchCaptures: ["x","left","middle","right"],
+    freeCaptures: [],
+    selectOrder: [p('<x>')],
+    isAutoRule: false
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "or.tautology",
+    title: "Tautology of Or",
+    matchPattern: p('or(<left>...,<x>,<middle>...,not(<x>),<right>...)'),
+    replacementPattern: p('id{"true"}'),
+    matchCaptures: ["x","left","middle","right"],
+    freeCaptures: [],
+    selectOrder: [p('<x>')],
+    isAutoRule: false
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "or.tautology2",
+    title: "Tautology of Or",
+    matchPattern: p('or(<left>...,not(<x>),<middle>...,<x>,<right>...)'),
+    replacementPattern: p('id{"true"}'),
+    matchCaptures: ["x","left","middle","right"],
+    freeCaptures: [],
+    selectOrder: [p('<x>')],
+    isAutoRule: false
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "or.absorbtion",
+    title: "Absorption of Or",
+    matchPattern: p('or(<left>...,<x>,<middle>...,and(<rightleft>...,<x>,<rightright>...),<right>...)'),
+    replacementPattern: p('or(<left>...,<x>,<middle>...,<right>...)'),
+    matchCaptures: ["x","left","middle","rightleft","rightright","right"],
+    freeCaptures: [],
+    selectOrder: [p('and(<rightleft>...,<x>,<rightright>...)'),p('<x>')],
+    isAutoRule: false
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "or.absorbtion2",
+    title: "Absorption of Or",
+    matchPattern: p('or(<left>...,and(<rightleft>...,<x>,<rightright>...),<middle>...,<x>,<right>...)'),
+    replacementPattern: p('or(<left>...,<middle>...,<x>,<right>...)'),
+    matchCaptures: ["x","left","middle","rightleft","rightright","right"],
+    freeCaptures: [],
+    selectOrder: [p('and(<rightleft>...,<x>,<rightright>...)'),p('<x>')],
+    isAutoRule: false
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "or.neutrality",
+    title: "Neutrality of Or",
+    matchPattern: p('or(<left>...,id{"false"},<right>...)'),
+    replacementPattern: p('or(<left>...,<right>...)'),
+    matchCaptures: ["left","right"],
+    freeCaptures: [],
+    selectOrder: [],
+    isAutoRule: false
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "or.truification",
+    title: "Truification of Or",
+    matchPattern: p('or(<left>...,id{"true"},<right>...)'),
+    replacementPattern: p('id{"true"}'),
+    matchCaptures: ["left","right"],
+    freeCaptures: [],
+    selectOrder: [],
+    isAutoRule: false
+}));
+
+// or,and
+
+Umform.registerRule(new Umform.Rule({
+    name: "and.distribute",
+    title: "Multiply Out (Distributive Law of And over Or)",
+    matchPattern: p('and(<left>...,or(<x>...),<right>...)'),
+    replacementPattern: p('or(__map__(<x>...,<xi>,and(<left>...,<xi>,<right>...)))'),
+    matchCaptures: ["x","left","right"],
+    freeCaptures: [],
+    selectOrder: [p('or(<x>...)')],
+    isAutoRule: false
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "or.distribute",
+    title: "Multiply Out (Distributive Law of Or over And)",
+    matchPattern: p('or(<left>...,and(<x>...),<right>...)'),
+    replacementPattern: p('and(__map__(<x>...,<xi>,or(<left>...,<xi>,<right>...)))'),
+    matchCaptures: ["x","left","right"],
+    freeCaptures: [],
+    selectOrder: [p('and(<x>...)')],
+    isAutoRule: false
+}));
+
+// de Morgan's Laws
+
+Umform.registerRule(new Umform.Rule({
+    name: "and.deMorgan",
+    title: "De Morgan's Law for And",
+    matchPattern: p('and(<x>...)'),
+    replacementPattern: p('not(or(__map__(<x>...,<xi>,not(<xi>))))'),
+    matchCaptures: ["x"],
+    freeCaptures: [],
+    selectOrder: [],
+    isAutoRule: false
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "or.deMorgan",
+    title: "De Morgan's Law for Or",
+    matchPattern: p('or(<x>...)'),
+    replacementPattern: p('not(and(__map__(<x>...,<xi>,not(<xi>))))'),
+    matchCaptures: ["x"],
+    freeCaptures: [],
+    selectOrder: [],
+    isAutoRule: false
+}));
+
+// negierte form; vielleicht wieder löschen, wenns zu viel wird
+Umform.registerRule(new Umform.Rule({
+    name: "and.deMorgan2",
+    title: "De Morgan's Law for And",
+    matchPattern: p('not(and(<x>...))'),
+    replacementPattern: p('or(__map__(<x>...,<xi>,not(<xi>)))'),
+    matchCaptures: ["x"],
+    freeCaptures: [],
+    selectOrder: [],
+    isAutoRule: false
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "or.deMorgan2",
+    title: "De Morgan's Law for Or",
+    matchPattern: p('not(or(<x>...))'),
+    replacementPattern: p('and(__map__(<x>...,<xi>,not(<xi>)))'),
+    matchCaptures: ["x"],
+    freeCaptures: [],
+    selectOrder: [],
+    isAutoRule: false
+}));
+
+// implication
+
+Umform.registerRule(new Umform.Rule({
+    name: "implication.definition",
+    title: "Implication Definition",
+    matchPattern: p('implication(<x>,<y>)'),
+    replacementPattern: p('or(not(<x>),<y>)'),
+    matchCaptures: ["x","y"],
+    freeCaptures: [],
+    selectOrder: [],
+    isAutoRule: false
+}));
+
+// implication
+
+Umform.registerRule(new Umform.Rule({
+    name: "implication.definition.reverse",
+    title: "Implication Definition (Reverse)",
+    matchPattern: p('or(<left>...,not(<x>),<middle>...,<y>,<right>...)'),
+    replacementPattern: p('or(<left>...,implication(<x>,<y>),<middle>...,<right>...)'),
+    matchCaptures: ["x","y","left","middle","right"],
+    freeCaptures: [],
+    selectOrder: [],
+    isAutoRule: false
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "implication.definition.reverse2",
+    title: "Implication Definition (Reverse)",
+    matchPattern: p('or(<left>...,<y>,<middle>...,not(<x>),<right>...)'),
+    replacementPattern: p('or(<left>...,implication(<x>,<y>),<middle>...,<right>...)'),
+    matchCaptures: ["x","y","left","middle","right"],
+    freeCaptures: [],
+    selectOrder: [p('<y>'),p('not(<x>)')],
+    isAutoRule: false
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "implication.falsification",
+    title: "Implication Falsification",
+    matchPattern: p('implication(id{"true"},id{"false"})'),
+    replacementPattern: p('id{"false"}'),
+    matchCaptures: [],
+    freeCaptures: [],
+    selectOrder: [],
+    isAutoRule: false
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "implication.truification",
+    title: "Implication Truification",
+    matchPattern: p('implication(id{"false"},<y>)'),
+    replacementPattern: p('id{"true"}'),
+    matchCaptures: ["y"],
+    freeCaptures: [],
+    selectOrder: [],
+    isAutoRule: false
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "implication.transitivity.reduced",
+    title: "Implication Transitivity (Reduced output)",
+    matchPattern: p('and(<left>...,implication(<x>,<y>),<middle>...,implication(<y>,<z>),<right>...)'),
+    replacementPattern: p('and(<left>...,implication(<x>,<y>),<middle>...,implication(<x>,<z>),<right>...)'),
+    matchCaptures: ["x","y","z","left","middle","right"],
+    freeCaptures: [],
+    selectOrder: [],
+    isAutoRule: false
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "implication.transitivity.reduced2",
+    title: "Implication Transitivity (Reduced output)",
+    matchPattern: p('and(<left>...,implication(<y>,<z>),<middle>...,implication(<x>,<y>),<right>...)'),
+    replacementPattern: p('and(<left>...,implication(<x>,<z>),<middle>...,implication(<x>,<y>),<right>...)'),
+    matchCaptures: ["x","y","z","left","middle","right"],
+    freeCaptures: [],
+    selectOrder: [],
+    isAutoRule: false
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "implication.transitivity.expanded",
+    title: "Implication Transitivity (Reduced output)",
+    matchPattern: p('and(<left>...,implication(<x>,<y>),<middle>...,implication(<y>,<z>),<right>...)'),
+    replacementPattern: p('and(<left>...,implication(<x>,<y>),<middle>...,implication(<y>,<z>),implication(<x>,<z>),<right>...)'),
+    matchCaptures: ["x","y","z","left","middle","right"],
+    freeCaptures: [],
+    selectOrder: [],
+    isAutoRule: false
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "implication.transitivity.expaned2",
+    title: "Implication Transitivity (Expanded output)",
+    matchPattern: p('and(<left>...,implication(<y>,<z>),<middle>...,implication(<x>,<y>),<right>...)'),
+    replacementPattern: p('and(<left>...,implication(<y>,<z>),<middle>...,implication(<x>,<y>),implication(<x>,<z>)<right>...)'),
+    matchCaptures: ["x","y","z","left","middle","right"],
+    freeCaptures: [],
+    selectOrder: [],
+    isAutoRule: false
+}));
+
+// equivalence
+
+Umform.registerRule(new Umform.Rule({
+    name: "equivalence.definition.implication",
+    title: "Equivalence Definition (Implication)",
+    matchPattern: p('equivalence(<x>,<y>)'),
+    replacementPattern: p('and(implication(<x>,<y>),implication(<y>,<x>))'),
+    matchCaptures: ["x","y"],
+    freeCaptures: [],
+    selectOrder: [],
+    isAutoRule: false
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "equivalence.definition.implication.reverse",
+    title: "Equivalence Definition (Implication,Reverse)",
+    matchPattern: p('and(<left>...,implication(<x>,<y>),<middle>...,implication(<y>,<x>),<right>...)'),
+    replacementPattern: p('and(<left>...,equivalence(<x>,<y>),<middle>...,<right>...)'),
+    matchCaptures: ["x","y","left","middle","right"],
+    freeCaptures: [],
+    selectOrder: [],
+    isAutoRule: false
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "equivalence.definition.or",
+    title: "Equivalence Definition (Or)",
+    matchPattern: p('equivalence(<x>,<y>)'),
+    replacementPattern: p('or(and(<x>,<y>),and(not(<x>),not(<y>)))'),
+    matchCaptures: ["x","y"],
+    freeCaptures: [],
+    selectOrder: [p('implication(<x>,<y>)'),p('implication(<y>,<x>)')],
+    isAutoRule: false
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "equivalence.definition.or.reverse",
+    title: "Equivalence Definition (Or,Reverse)",
+    matchPattern: p('or(<left>...,and(<x>,<y>),<middle>...,and(not(<x>),not(<y>)),<right>...)'),
+    replacementPattern: p('or(<left>...,equivalence(<x>,<y>),<middle>...,<right>...)'),
+    matchCaptures: ["x","y","left","middle","right"],
+    freeCaptures: [],
+    selectOrder: [p('and(<x>,<y>)'),p('and(not(<x>),not(<y>))')],
+    isAutoRule: false
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "equivalence.truification",
+    title: "Equivalence Truification",
+    matchPattern: p('equivalence(<x>,<x>)'),
+    replacementPattern: p('id{"true"}'),
+    matchCaptures: ["x"],
+    freeCaptures: [],
+    selectOrder: [],
+    isAutoRule: false
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "equivalence.falsification",
+    title: "Equivalence Falsification",
+    matchPattern: p('equivalence(<x>,not(<x>))'),
+    replacementPattern: p('id{"false"}'),
+    matchCaptures: ["x"],
+    freeCaptures: [],
+    selectOrder: [],
+    isAutoRule: false
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "equivalence.falsification2",
+    title: "Equivalence Falsification",
+    matchPattern: p('equivalence(not(<x>),<x>)'),
+    replacementPattern: p('id{"false"}'),
+    matchCaptures: ["x"],
+    freeCaptures: [],
+    selectOrder: [],
+    isAutoRule: false
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "equivalence.falsification.const",
+    title: "Equivalence Falsification",
+    matchPattern: p('equivalence(id{"true"},id{"false"})'),
+    replacementPattern: p('id{"false"}'),
+    matchCaptures: [],
+    freeCaptures: [],
+    selectOrder: [],
+    isAutoRule: false
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "equivalence.falsification2.const",
+    title: "Equivalence Falsification",
+    matchPattern: p('equivalence(not(id{"false"}),id{"true"})'),
+    replacementPattern: p('id{"false"}'),
+    matchCaptures: [],
+    freeCaptures: [],
+    selectOrder: [],
+    isAutoRule: false
+}));
