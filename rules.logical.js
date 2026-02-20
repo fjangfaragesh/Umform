@@ -2,6 +2,18 @@
 // not
 
 Umform.registerRule(new Umform.Rule({
+    name: "debug",
+    title: "Debug Rule",
+    matchPattern: p('sum(<x>...id{"debug"})'),
+    replacementPattern: p('product(<x>...)'),
+    matchCaptures: ['x'],
+    freeCaptures: [],
+    selectOrder: [],
+    isAutoRule: false
+}));
+
+
+Umform.registerRule(new Umform.Rule({
     name: "not.not",
     title: "Double Negation",
     matchPattern: p('not(not(<x>))'),
@@ -140,9 +152,9 @@ Umform.registerRule(new Umform.Rule({
     title: "Neutrality of And",
     matchPattern: p('and(<left>...,id{"true"},<right>...)'),
     replacementPattern: p('and(<left>...,<right>...)'),
-    matchCaptures: ["left","right"],
+    matchCaptures: ["x","left","right"],
     freeCaptures: [],
-    selectOrder: ['id{"true"}'],
+    selectOrder: [],
     isAutoRule: false
 }));
 

@@ -8,13 +8,9 @@ Umform.registerType(new class extends Umform.TypeDefinition {
         return 90;
     }
     createBox(exprNodeUI, node, nodePrec) {
-        const minusbox = new TextBox("~")
-        const box = new HBox([
-                        minusbox,
-                        exprNodeUI.nodeToBox(node.children[0], nodePrec)
-                    ], 2);
+        const box = new NotBox(exprNodeUI.nodeToBox(node.children[0], 0), 2);// nodePrec=0
 
-        return {box:box, nodeContentElements:[minusbox]}
+        return {box:box, nodeContentElements:[box]}
     }
 }());
 

@@ -248,6 +248,7 @@ class NodeStateController {
 
         // callback(node, currentState)
         this.onNodeClick = null;
+        this.onNodeContextMenu = null;
     }
 
     reset() {
@@ -271,13 +272,23 @@ class NodeStateController {
         return node._uid || (node._uid = Symbol());
     }
 
-    click(node) {
+    click(node,e) {
         const key = this.getKey(node);
         const state = this.nodes.get(key);
         if (!state || !state.selectable) return;
 
         if (this.onNodeClick) {
-            this.onNodeClick(node, state);
+            this.onNodeClick(node, state, e);
+        }
+    }
+
+    contextmenu(node,e) {
+        const key = this.getKey(node);
+        const state = this.nodes.get(key);
+        if (!state || !state.selectable) return;
+
+        if (this.onNodeContextMenu) {
+            this.onNodeContextMenu(node, state, e);
         }
     }
 
@@ -322,7 +333,8 @@ Umform.Workspace = class{
 
         this.element = document.createElement("div");
         this.controller = new NodeStateController();
-        this.controller.onNodeClick = (node, state) => this.clickNode(node);
+        this.controller.onNodeClick = (node, state, e) => this.clickNode(node, e);
+        this.controller.onNodeContextMenu = (node, state, e) => this.contextMenuNode(node, e);
 
         this.exprViewer = new ExprViewer(new Umform.ExprNodeUI(this.expr, this.controller), 1000, 500);
         this.element.appendChild(this.exprViewer.element);
@@ -391,6 +403,8 @@ Umform.Workspace = class{
             this.setExpr(expr);
         });
         this.moreButtonsDiv.appendChild(this.taskSelect);
+
+        this.contextMenue = new PyramidContextMenu(70);
     }
 
     setExpr(newExpr,  noUpdate = false) {
@@ -419,17 +433,18 @@ Umform.Workspace = class{
         }
     }
 
-    clickNode(node) {
+    clickNode(node, e) {
         let nextAction = this.getNextAction();
 
         if (nextAction === "selectRootNode" || nextAction === "selectRuleOrRootNode") {
             this.selectedRuleRootNode = node;
-        } else if (nextAction === "selectRule" && this.selectedRuleRootNode === node) {
-            this.selectedRuleRootNode = null;
+        } else if (nextAction === "selectRule") {
+            this.selectedRuleRootNode = this.selectedRuleRootNode !== node ? node : null;
         } else if (nextAction === "selectNextNode") {
             let selectableNodes = this.prepareSelectNextNode();
             if (selectableNodes.has(node)) {
                 this.currentMatches = matchAll(this.selectedRule.selectOrder[this.selectOrderIndex], node, this.currentMatches);
+                this.currentMatches = this.selectedRule.calcMatchsWithUniqueSolutions(this.currentMatches);
                 this.selectOrderIndex++;
             }
         }
@@ -439,7 +454,7 @@ Umform.Workspace = class{
         this.updateVisual();
     }
 
-    clickRule(rule) {
+    clickRule(rule, e) {
         let nextAction = this.getNextAction();
 
         if (nextAction === "selectRule" || nextAction === "selectRuleOrRootNode") {
@@ -461,8 +476,20 @@ Umform.Workspace = class{
         this.updateVisual();
     }
 
+    contextMenuNode(node, e) {
+        let nextAction = this.getNextAction();
+
+        if (nextAction === "selectRuleOrRootNode" || nextAction === "selectRule") {
+            this.selectedRuleRootNode = node;
+            this.buildContextMenueNode(node);
+            this.contextMenue.show(e.clientX,e.clientY);
+        }
+
+        this.updateVisual();
+    }
+
     applySelectedRule() {
-        let replaced = this.selectedRule.apply(this.selectedRuleRootNode, 0, new Map(), this.currentMatches);
+        let replaced = this.selectedRule.replace(this.currentMatches[0], new Map());
         this.setExpr(this.expr.cloneReplace(this.selectedRuleRootNode, replaced));
         this.selectedRule = null;
         this.selectedRuleRootNode = null;
@@ -480,8 +507,8 @@ Umform.Workspace = class{
                 return "selectRootNode";
             } else {
                 this.prepareSelectNextNode();
-                console.log(this.selectedRule.getMatches(this.selectedRuleRootNode, this.currentMatches));
-                if (this.selectedRule.getMatches(this.selectedRuleRootNode, this.currentMatches).length >= 2) {
+                if (this.selectedRule.getMatchesWithUniqueSolutions(this.selectedRuleRootNode, this.currentMatches).length >= 2) {
+                    if (this.selectOrderIndex >= this.selectedRule.selectOrder.length) return "applyRule";// erstbeste ausführen
                     return "selectNextNode";
                 } else {
                     return "applyRule";
@@ -564,6 +591,120 @@ Umform.Workspace = class{
             this.selectOrderIndex++;
         }
         return new Set();
+    }
+
+    buildContextMenueNode() {
+        this.contextMenue.clear();
+        let i = 0;
+        for (let rule of this.rules) {
+            if (rule.matches(this.selectedRuleRootNode)) {
+                let icon = Umform.Icons.iconFromRule(rule);
+                icon.title = rule.title;
+                this.contextMenue.addItem(icon,(e)=>this.clickRule(rule,e),"bottom",i++);
+            }
+        }
+    }
+
+
+}
+
+
+class ContextMenu {
+    constructor() {
+        this.container = document.createElement("div");
+
+        this.container.style.position = "fixed";
+        this.container.style.pointerEvents = "none";
+        this.container.style.zIndex = 10000;
+        this.container.style.display = "none";
+
+        document.body.appendChild(this.container);
+
+        this.items = [];
+    }
+
+    clear() {
+        this.items = [];
+        this.container.innerHTML = "";
+    }
+
+    addItem(content,onClick,x,y,width="",height="") {
+        const btn = document.createElement("div");
+        //btn.style.backgroundColor = "white";
+        //btn.style.outline = "1px solid black";
+        btn.style.position = "absolute";
+        btn.style.pointerEvents = "auto";
+        btn.style.left = `${x}px`;
+        btn.style.top = `${y}px`;
+        btn.style.width = `${width}px`;
+        btn.style.height = `${height}px`;
+        btn.style.overflow = "hidden";
+        btn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            this.hide();
+            onClick();
+        });
+        btn.appendChild(content);
+        this.items.push(btn);
+        this.container.appendChild(btn);
+    }
+
+    show(x, y) {
+        this.container.style.left = x + "px";
+        this.container.style.top = y + "px";
+
+        this.container.style.display = "block";
+
+        setTimeout(() => {
+            window.addEventListener("click", this._outsideHandler);
+        });
+    }
+
+    hide() {
+        this.container.style.display = "none";
+        window.removeEventListener("click", this._outsideHandler);
+    }
+
+    _outsideHandler = () => this.hide();
+}
+
+
+class PyramidContextMenu extends ContextMenu {
+    constructor(gridSize, gap) {
+        super();
+        this.gridSize = gridSize;
+        this.gap = gap ?? this.gridSize*0.1;
+    }
+
+    addItem(content, onClick, side, index) {
+        let row = Math.floor(Math.sqrt(index));
+        let column = (index - row**2) - row;
+        let xPyramid = column*this.gridSize - 0.5*this.gridSize;
+        let yPyramid = row*this.gridSize + this.gridSize;
+        let x,y;
+        switch (side) {
+            case "top":
+                x = xPyramid + 0.5*this.gap;
+                y = -yPyramid - this.gridSize + 0.5*this.gap;
+                break;
+            case "bottom":
+                x = -xPyramid - this.gridSize + 0.5*this.gap;
+                y = yPyramid + 0.5*this.gap;
+                break;
+            case "left":
+                x = -yPyramid - this.gridSize + 0.5*this.gap;
+                y = -xPyramid - this.gridSize + 0.5*this.gap;
+                break;
+            case "right":
+                x = yPyramid + 0.5*this.gap;
+                y = xPyramid + 0.5*this.gap;
+                break;
+            case "center":
+                x = -this.gridSize/2 + 0.5*this.gap;
+                y = -this.gridSize/2 + 0.5*this.gap;
+                break;
+        }
+        super.addItem(content,onClick,x,y,this.gridSize-this.gap, this.gridSize-this.gap);
     }
 
 }

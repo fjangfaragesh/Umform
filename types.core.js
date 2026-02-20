@@ -7,6 +7,20 @@ Umform.NOperationTypeDefinition = class extends Umform.TypeDefinition {
         const boxes = [];
         const symbols = [];
 
+        if (node.children.length === 0) {
+            let textBox = new TextBox("(" + this.getOpSymbol() + ")");
+            return {box:textBox, nodeContentElements:[textBox]};
+        }
+
+        if (node.children.length === 1) {
+            const textbox1 = new TextBox("(" + this.getOpSymbol() + ")(")
+            const childbox = exprNodeUI.nodeToBox(node.children[0], 0);
+            const textbox2 = new TextBox(")")
+            const box = new HBox([textbox1,childbox,textbox2], 2);
+
+            return {box:box, nodeContentElements:[textbox1,textbox2]}
+        }
+
         node.children.forEach((c, i) => {
             if (i > 0) {
                 let symbolbox = new OperatorBox(this.getOpSymbol());
@@ -70,8 +84,18 @@ Umform.registerType(new class extends Umform.TypeDefinition {
         return 100;
     }
     createBox(exprNodeUI, node, parentPrec) {
-        const textbox = new TextBox("<" + String(node.data.name) + (node.data.variadic ? "..." : "") + ">");
-        return {box:textbox, nodeContentElements:[textbox]}
+        let str = "<" + String(node.data.name) + (node.data.variadic ? "..." : "") + ">";
+        if (node.children.length !== 0) {
+            const textbox1 = new TextBox(str + "(");
+            const childbox = exprNodeUI.nodeToBox(node.children[0], 0);
+            console.log(node.children[0]);
+            const textbox2 = new TextBox(")");
+            return {box:new HBox([textbox1,childbox,textbox2], 0), nodeContentElements:[textbox1,textbox2]}
+        } else {
+            const textbox = new TextBox(str);
+            return {box:textbox,  nodeContentElements:[textbox]};
+        }
+        
     }
 }());
 

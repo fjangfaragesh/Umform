@@ -32,6 +32,8 @@ html, body {
 }
     </style>
     <script src="core.js"></script>
+    <script src="core.parse_stringify.js"></script>
+    <script src="core.match_replace.js"></script>
     <script src="box.js"></script>
     <script src="ui.js"></script>
 
@@ -45,28 +47,30 @@ html, body {
     <script src="rules.equation.js"></script>
 
     <script src="exampletasks.js"></script>
+    <script src="icons.js"></script>
     <script>
 let controller = null;
 let expr = null;
 let pattern = null;
 
-let ws;
+let workspace;
 
 onload = () => {
 
     expr = p(EXAMPLE_TASKS[4].task);
     //expr = p('sum(product(id{"a"},id{"b"},id{"x"}),product(id{"y"},id{"b"},id{"a"}))');
     //expr = p('equals(id{"x"},product(sum(id{"a"},id{"b"}),sum(id{"c"},id{"d"})))');
-
-    let workspace = new Umform.Workspace({
+    // power(fraction(sum(id{"a"},id{"b"}),power(id{"x"},number{"2"})),number{"3"})
+        // power(power(power(sum(id{"a"},id{"b"}),number{"3"}),number{"3"}),number{"3"})
+    // and(id{"true"},id{"true"})
+    workspace = new Umform.Workspace({
         expr: expr,
         rules: Array.from(Umform.RULES.values()),
         autoRules: Array.from(Umform.AUTO_RULES.values()),
     });
     document.body.appendChild(workspace.element);
 
-
-
+   
 
 };
     </script>
@@ -74,5 +78,6 @@ onload = () => {
 </head>
 <body>
 
+</div>
 </body>
 </html>

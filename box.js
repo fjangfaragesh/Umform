@@ -308,6 +308,53 @@ class FractionBox extends Box {
     }
 }
 
+class NotBox extends Box {
+    constructor(denominator, gap = 4, rule = 1) {
+        super();
+        this.denominator = denominator;
+        this.gap = gap;
+        this.rule = rule;
+
+        this.lineElement = null;
+        this.color = "black";
+    }
+
+    layout(ctx) {
+        this.denominator.layout(ctx);
+
+        this.width = Math.max(this.denominator.width) + 4;
+
+        this.height = this.gap + this.denominator.height + this.rule;
+
+        this.depth = 0;
+    }
+
+    render(svg, x, baselineY) {
+        const centerX = x + this.width / 2;
+
+        this.lineElement = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        this.lineElement.setAttribute("x1", x);
+        this.lineElement.setAttribute("x2", x + this.width);
+        this.lineElement.setAttribute("y1", baselineY - (this.gap + this.denominator.height));
+        this.lineElement.setAttribute("y2", baselineY - (this.gap + this.denominator.height));
+        this.lineElement.setAttribute("stroke", this.color);
+        this.lineElement.setAttribute("stroke-width", this.rule);
+        svg.appendChild(this.lineElement);
+
+        const denX = centerX - this.denominator.width / 2;
+        const denY = baselineY;
+
+        this.denominator.render(svg, denX, denY);
+    }
+    
+    setColor(color) {
+        this.color = color;
+        if (this.lineElement) {
+            this.lineElement.setAttribute("stroke", color);
+        }
+    }
+}
+
 class ScaledBox extends Box {
     constructor(inner, scale) {
         super();
@@ -361,32 +408,105 @@ class OperatorBox extends Box {
 }
 
 class ParenthesisBox extends Box {
-    constructor(inner) {
+    constructor(inner, options = {}) {
         super();
         this.inner = inner;
-        this.left = new TextBox("(");
-        this.right = new TextBox(")");
+
+        this.strokeWidth = options.strokeWidth ?? 1.5;
+        this.bracketWidth = options.bracketWidth ?? 4;
+        this.switchHeight = options.switchHeight ?? 16; 
+        // ab welcher Gesamthöhe (height+depth) gestretcht wird
+
+        this.useStretch = false;
+        this.color = "black";
+
+        this.leftText = new TextBox("(");
+        this.rightText = new TextBox(")");
+
+        this.leftPath = null;
+        this.rightPath = null;
     }
 
     layout(ctx) {
         this.inner.layout(ctx);
-        this.left.layout(ctx);
-        this.right.layout(ctx);
 
-        this.width = this.left.width + this.inner.width + this.right.width;
-        this.height = Math.max(this.left.height, this.inner.height, this.right.height);
-        this.depth = Math.max(this.left.depth, this.inner.depth, this.right.depth);
+        const totalHeight = this.inner.height + this.inner.depth;
+        this.useStretch = totalHeight > this.switchHeight;
+
+        if (!this.useStretch) {
+            this.leftText.layout(ctx);
+            this.rightText.layout(ctx);
+
+            this.width =
+                this.leftText.width +
+                this.inner.width +
+                this.rightText.width;
+
+            this.height = Math.max(this.leftText.height, this.inner.height);
+            this.depth = Math.max(this.leftText.depth, this.inner.depth);
+        } else {
+            this.width =
+                this.bracketWidth * 2 +
+                this.inner.width;
+
+            this.height = this.inner.height;
+            this.depth = this.inner.depth;
+        }
     }
 
     render(svg, x, baselineY) {
-        this.left.render(svg, x, baselineY);
-        this.inner.render(svg, x + this.left.width, baselineY);
-        this.right.render(svg, x + this.left.width + this.inner.width, baselineY);
+        if (!this.useStretch) {
+            this.leftText.render(svg, x, baselineY);
+            this.inner.render(svg, x + this.leftText.width, baselineY);
+            this.rightText.render(
+                svg,
+                x + this.leftText.width + this.inner.width,
+                baselineY
+            );
+            return;
+        }
+
+        const top = baselineY - this.height;
+        const bottom = baselineY + this.depth;
+        const h = bottom - top;
+        const bw = this.bracketWidth;
+
+        // linke
+        const left = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        left.setAttribute("fill", "none");
+        left.setAttribute("stroke", this.color);
+        left.setAttribute("stroke-width", this.strokeWidth);
+        left.setAttribute("d", `
+            M ${x + bw} ${top}
+            Q ${x} ${top + h * 0.25} ${x} ${top + h * 0.5}
+            Q ${x} ${top + h * 0.75} ${x + bw} ${bottom}
+        `);
+        svg.appendChild(left);
+        this.leftPath = left;
+
+        this.inner.render(svg, x + bw, baselineY);
+
+        const rx = x + bw + this.inner.width;
+
+        const right = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        right.setAttribute("fill", "none");
+        right.setAttribute("stroke", this.color);
+        right.setAttribute("stroke-width", this.strokeWidth);
+        right.setAttribute("d", `
+            M ${rx} ${top}
+            Q ${rx + bw} ${top + h * 0.25} ${rx + bw} ${top + h * 0.5}
+            Q ${rx + bw} ${top + h * 0.75} ${rx} ${bottom}
+        `);
+        svg.appendChild(right);
+        this.rightPath = right;
     }
 
     setColor(color) {
-        this.left.setColor(color);
-        this.right.setColor(color);
+        this.color = color;
+        this.leftText.setColor(color);
+        this.rightText.setColor(color);
+        if (this.leftPath) this.leftPath.setAttribute("stroke", color);
+        if (this.rightPath) this.rightPath.setAttribute("stroke", color);
     }
 }
 
@@ -462,7 +582,12 @@ class InteractiveBox extends Box {
 
         rect.addEventListener("click", (e) => {
             e.stopPropagation();
-            this.controller.click(this.node);
+            this.controller.click(this.node,e);
+        });
+        rect.addEventListener("contextmenu", (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            this.controller.contextmenu(this.node,e);
         });
 
         svg.appendChild(rect);

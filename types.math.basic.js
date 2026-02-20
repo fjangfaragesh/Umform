@@ -78,9 +78,9 @@ Umform.registerType(new class extends Umform.TypeDefinition {
     }
     createBox(exprNodeUI, node, nodePrec) {
         const box = new FractionBox(
-                        exprNodeUI.nodeToBox(node.children[0], nodePrec),
-                        exprNodeUI.nodeToBox(node.children[1], nodePrec)
-                    );
+                        exprNodeUI.nodeToBox(node.children[0], 0),
+                        exprNodeUI.nodeToBox(node.children[1], 0)
+                    );// notePrec=0
         return {box:box, nodeContentElements:[box]};
     }
 }());
