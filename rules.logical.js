@@ -21,7 +21,8 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: ['x'],
     freeCaptures: [],
     selectOrder: [],
-    isAutoRule: false
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon("o̅̅",40,colors)
 }));
 
 Umform.registerRule(new Umform.Rule({
@@ -32,7 +33,8 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: [],
     freeCaptures: [],
     selectOrder: [],
-    isAutoRule: false
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon("0̅",40,colors)
 }));
 
 Umform.registerRule(new Umform.Rule({
@@ -43,8 +45,10 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: [],
     freeCaptures: [],
     selectOrder: [],
-    isAutoRule: false
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon("1̅",40,colors)
 }));
+
 
 // and
 
@@ -56,7 +60,8 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: [],
     freeCaptures: [],
     selectOrder: [],
-    isAutoRule: true
+    isAutoRule: true,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines("EMP","TY ∧",colors)
 }));
 
 Umform.registerRule(new Umform.Rule({
@@ -67,7 +72,8 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: ["x"],
     freeCaptures: [],
     selectOrder: [p('<x>')],
-    isAutoRule: true
+    isAutoRule: true,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines("SING","LE ∧",colors)
 }));
 
 Umform.registerRule(new Umform.Rule({
@@ -78,7 +84,8 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: ["a","b","left","middle","right"],
     freeCaptures: [],
     selectOrder: [p('<a>'), p('<b>')],
-    isAutoRule: false
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createCommutative('∧',colors)
 }));
 
 Umform.registerRule(new Umform.Rule({
@@ -89,7 +96,8 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: ["x","left","right"],
     freeCaptures: [],
     selectOrder: [p('and(<x>...)')],
-    isAutoRule: true
+    isAutoRule: true,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines('ASS','∧',colors)
 }));
 
 Umform.registerRule(new Umform.Rule({
@@ -100,7 +108,8 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: ["x","left","middle","right"],
     freeCaptures: [],
     selectOrder: [p('<x>')],
-    isAutoRule: false
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines('x ∧ x','IDEM',colors)
 }));
 
 Umform.registerRule(new Umform.Rule({
@@ -111,7 +120,8 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: ["x","left","middle","right"],
     freeCaptures: [],
     selectOrder: [p('<x>')],
-    isAutoRule: false
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines('x ∧ x̅','CNTR',colors)
 }));
 
 Umform.registerRule(new Umform.Rule({
@@ -122,7 +132,8 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: ["x","left","middle","right"],
     freeCaptures: [],
     selectOrder: [p('<x>')],
-    isAutoRule: false
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines('x̅ ∧ x','CNTR',colors)
 }));
 
 Umform.registerRule(new Umform.Rule({
@@ -133,7 +144,8 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: ["x","left","middle","rightleft","rightright","right"],
     freeCaptures: [],
     selectOrder: [p('or(<rightleft>...,<x>,<rightright>...)'),p('<x>')],
-    isAutoRule: false
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines('AB ∧','SORB',colors)
 }));
 
 Umform.registerRule(new Umform.Rule({
@@ -144,7 +156,8 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: ["x","left","middle","rightleft","rightright","right"],
     freeCaptures: [],
     selectOrder: [p('or(<rightleft>...,<x>,<rightright>...)'),p('<x>')],
-    isAutoRule: false
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines('AB ∧','SORB',colors)
 }));
 
 Umform.registerRule(new Umform.Rule({
@@ -155,7 +168,8 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: ["x","left","right"],
     freeCaptures: [],
     selectOrder: [],
-    isAutoRule: false
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines('x ∧ 1','NEUT',colors)
 }));
 
 Umform.registerRule(new Umform.Rule({
@@ -166,7 +180,8 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: ["left","right"],
     freeCaptures: [],
     selectOrder: [],
-    isAutoRule: false
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines('x ∧ 0','FALS',colors)
 }));
 
 // or
@@ -179,7 +194,8 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: [],
     freeCaptures: [],
     selectOrder: [],
-    isAutoRule: true
+    isAutoRule: true,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines("EMP","TY ∨",colors)
 }));
 
 Umform.registerRule(new Umform.Rule({
@@ -190,7 +206,8 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: ["x"],
     freeCaptures: [],
     selectOrder: [p('<x>')],
-    isAutoRule: true
+    isAutoRule: true,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines("SING","LE ∨",colors)
 }));
 
 Umform.registerRule(new Umform.Rule({
@@ -201,7 +218,8 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: ["a","b","left","middle","right"],
     freeCaptures: [],
     selectOrder: [p('<a>'), p('<b>')],
-    isAutoRule: false
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createCommutative('∨',colors)
 }));
 
 Umform.registerRule(new Umform.Rule({
@@ -212,7 +230,8 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: ["x","left","middle","right"],
     freeCaptures: [],
     selectOrder: [p('or(<x>...)')],
-    isAutoRule: true
+    isAutoRule: true,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines('ASS','∨',colors)
 }));
 
 Umform.registerRule(new Umform.Rule({
@@ -223,7 +242,8 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: ["x","left","middle","right"],
     freeCaptures: [],
     selectOrder: [p('<x>')],
-    isAutoRule: false
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines('x ∨ x','IDEM',colors)
 }));
 
 Umform.registerRule(new Umform.Rule({
@@ -234,7 +254,8 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: ["x","left","middle","right"],
     freeCaptures: [],
     selectOrder: [p('<x>')],
-    isAutoRule: false
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines('x ∨ x̅','TAUT',colors)
 }));
 
 Umform.registerRule(new Umform.Rule({
@@ -245,7 +266,8 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: ["x","left","middle","right"],
     freeCaptures: [],
     selectOrder: [p('<x>')],
-    isAutoRule: false
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines('x̅ ∨ x','TAUT',colors)
 }));
 
 Umform.registerRule(new Umform.Rule({
@@ -256,7 +278,8 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: ["x","left","middle","rightleft","rightright","right"],
     freeCaptures: [],
     selectOrder: [p('and(<rightleft>...,<x>,<rightright>...)'),p('<x>')],
-    isAutoRule: false
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines('AB ∨','SORB',colors)
 }));
 
 Umform.registerRule(new Umform.Rule({
@@ -267,7 +290,8 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: ["x","left","middle","rightleft","rightright","right"],
     freeCaptures: [],
     selectOrder: [p('and(<rightleft>...,<x>,<rightright>...)'),p('<x>')],
-    isAutoRule: false
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines('AB ∨','SORB',colors)
 }));
 
 Umform.registerRule(new Umform.Rule({
@@ -278,7 +302,8 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: ["left","right"],
     freeCaptures: [],
     selectOrder: [],
-    isAutoRule: false
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines('x ∨ 0','NEUT',colors)
 }));
 
 Umform.registerRule(new Umform.Rule({
@@ -289,7 +314,8 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: ["left","right"],
     freeCaptures: [],
     selectOrder: [],
-    isAutoRule: false
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines('x ∨ 1','TRUE',colors)
 }));
 
 // or,and
@@ -302,7 +328,8 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: ["x","left","right"],
     freeCaptures: [],
     selectOrder: [p('or(<x>...)')],
-    isAutoRule: false
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines("∧ DIS","TRI ∨",colors)
 }));
 
 Umform.registerRule(new Umform.Rule({
@@ -313,7 +340,8 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: ["x","left","right"],
     freeCaptures: [],
     selectOrder: [p('and(<x>...)')],
-    isAutoRule: false
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines("∨ DIS","TRI ∧",colors)
 }));
 
 // de Morgan's Laws
@@ -326,7 +354,8 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: ["x"],
     freeCaptures: [],
     selectOrder: [],
-    isAutoRule: false
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines("∧ DE","MOR",colors)
 }));
 
 Umform.registerRule(new Umform.Rule({
@@ -337,7 +366,8 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: ["x"],
     freeCaptures: [],
     selectOrder: [],
-    isAutoRule: false
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines("∨ DE","MOR",colors)
 }));
 
 // negierte form; vielleicht wieder löschen, wenns zu viel wird
@@ -349,7 +379,8 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: ["x"],
     freeCaptures: [],
     selectOrder: [],
-    isAutoRule: false
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines("∧ DE","~ MOR",colors)
 }));
 
 Umform.registerRule(new Umform.Rule({
@@ -360,7 +391,8 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: ["x"],
     freeCaptures: [],
     selectOrder: [],
-    isAutoRule: false
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines("∨ DE","~ MOR",colors)
 }));
 
 // implication
@@ -373,7 +405,8 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: ["x","y"],
     freeCaptures: [],
     selectOrder: [],
-    isAutoRule: false
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines("→DEF","o̅∨o",colors)
 }));
 
 // implication
@@ -386,7 +419,8 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: ["x","y","left","middle","right"],
     freeCaptures: [],
     selectOrder: [],
-    isAutoRule: false
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines("o̅∨o","→DEF",colors)
 }));
 
 Umform.registerRule(new Umform.Rule({
@@ -397,7 +431,8 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: ["x","y","left","middle","right"],
     freeCaptures: [],
     selectOrder: [p('<y>'),p('not(<x>)')],
-    isAutoRule: false
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines("o∨o̅","→DEF",colors)
 }));
 
 Umform.registerRule(new Umform.Rule({
@@ -408,7 +443,8 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: [],
     freeCaptures: [],
     selectOrder: [],
-    isAutoRule: false
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines("1 → 0","FALS",colors)
 }));
 
 Umform.registerRule(new Umform.Rule({
@@ -419,7 +455,8 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: ["y"],
     freeCaptures: [],
     selectOrder: [],
-    isAutoRule: false
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines("0 → x","TRUE",colors)
 }));
 
 Umform.registerRule(new Umform.Rule({
@@ -430,7 +467,8 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: ["x","y","z","left","middle","right"],
     freeCaptures: [],
     selectOrder: [],
-    isAutoRule: false
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines("→TRA","NS",colors)
 }));
 
 Umform.registerRule(new Umform.Rule({
@@ -441,7 +479,8 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: ["x","y","z","left","middle","right"],
     freeCaptures: [],
     selectOrder: [],
-    isAutoRule: false
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines("→TRA","NS",colors)
 }));
 
 Umform.registerRule(new Umform.Rule({
@@ -452,7 +491,8 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: ["x","y","z","left","middle","right"],
     freeCaptures: [],
     selectOrder: [],
-    isAutoRule: false
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines("→TRA","NS ex",colors)
 }));
 
 Umform.registerRule(new Umform.Rule({
@@ -463,7 +503,8 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: ["x","y","z","left","middle","right"],
     freeCaptures: [],
     selectOrder: [],
-    isAutoRule: false
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines("→TRA","NS ex",colors)
 }));
 
 // equivalence
@@ -476,7 +517,8 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: ["x","y"],
     freeCaptures: [],
     selectOrder: [],
-    isAutoRule: false
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines("↔DEF","→ →",colors)
 }));
 
 Umform.registerRule(new Umform.Rule({
@@ -487,7 +529,8 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: ["x","y","left","middle","right"],
     freeCaptures: [],
     selectOrder: [],
-    isAutoRule: false
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines("→ →","↔DEF",colors)
 }));
 
 Umform.registerRule(new Umform.Rule({
@@ -498,7 +541,8 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: ["x","y"],
     freeCaptures: [],
     selectOrder: [p('implication(<x>,<y>)'),p('implication(<y>,<x>)')],
-    isAutoRule: false
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines("↔DEF","∨",colors)
 }));
 
 Umform.registerRule(new Umform.Rule({
@@ -509,7 +553,8 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: ["x","y","left","middle","right"],
     freeCaptures: [],
     selectOrder: [p('and(<x>,<y>)'),p('and(not(<x>),not(<y>))')],
-    isAutoRule: false
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines("∨","↔DEF",colors)
 }));
 
 Umform.registerRule(new Umform.Rule({
@@ -520,7 +565,8 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: ["x"],
     freeCaptures: [],
     selectOrder: [],
-    isAutoRule: false
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines("x↔x","TRUE",colors)
 }));
 
 Umform.registerRule(new Umform.Rule({
@@ -531,7 +577,8 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: ["x"],
     freeCaptures: [],
     selectOrder: [],
-    isAutoRule: false
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines("x↔x̅","FALSE",colors)
 }));
 
 Umform.registerRule(new Umform.Rule({
@@ -542,7 +589,8 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: ["x"],
     freeCaptures: [],
     selectOrder: [],
-    isAutoRule: false
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines("x̅↔x","FALSE",colors)
 }));
 
 Umform.registerRule(new Umform.Rule({
@@ -553,7 +601,8 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: [],
     freeCaptures: [],
     selectOrder: [],
-    isAutoRule: false
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines("1↔0","FALSE",colors)
 }));
 
 Umform.registerRule(new Umform.Rule({
@@ -564,5 +613,6 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: [],
     freeCaptures: [],
     selectOrder: [],
-    isAutoRule: false
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines("0↔1","FALSE",colors)
 }));

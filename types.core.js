@@ -122,5 +122,50 @@ Umform.registerType(new class extends Umform.TypeDefinition {
     }
 }());
 
+// no function, only for UI x⇛y
+Umform.registerType(new class extends Umform.NOperationTypeDefinition {
+    getName() {
+        return "__replacement_arrow__";
+    }
+    getTitle() {
+        return "Replacement Arrow (no function, only for User Interface)";
+    }
+    getPrecedence() {
+        return 11;
+    }
+    getOpSymbol() {
+        return "\u00A0\u00A0⇛\u00A0\u00A0";
+    }
+}());
 
+// no function, only for UI
+Umform.registerType(new class extends Umform.TypeDefinition {
+    getName() {
+        return "__vertical__";
+    }
+    getTitle() {
+        return "Vertical Alignment (no function, only for User Interface)";
+    }
+    getPrecedence() {
+        return 10;
+    }
+    createBox(exprNodeUI, node, parentPrec) {
+        return {box:new VBox(Array.from(node.children,(c, i) => exprNodeUI.nodeToBox(c, 0)),10), nodeContentElements:[]}
+    }
+}());
 
+// no function, only for UI
+Umform.registerType(new class extends Umform.TypeDefinition {
+    getName() {
+        return "__horizontal__";
+    }
+    getTitle() {
+        return "Horizontal Alignment (no function, only for User Interface)";
+    }
+    getPrecedence() {
+        return 10;
+    }
+    createBox(exprNodeUI, node, parentPrec) {
+        return {box:new HBox(Array.from(node.children,(c, i) => exprNodeUI.nodeToBox(c, 0)),4), nodeContentElements:[]}
+    }
+}());

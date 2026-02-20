@@ -60,87 +60,6 @@ Umform.ExprNodeUI = class {
 };
 
 
-// todo auslagern
-const NodeBoxCreators = {}
-
-NodeBoxCreators.var = function(exprNodeUI, node, nodePrec) {
-    const textbox = new TextBox(String(node.data));
-    return {box:textbox, nodeContentElements:[textbox]}
-}
-
-NodeBoxCreators.number = function(exprNodeUI, node, nodePrec) {
-    const textbox = new TextBox(String(node.data));
-    return {box:textbox, nodeContentElements:[textbox]}
-}
-
-NodeBoxCreators.neg = function(exprNodeUI, node, nodePrec) {
-    const minusbox = new TextBox("−")
-    box = new HBox([
-                    minusbox,
-                    exprNodeUI.nodeToBox(node.children[0], nodePrec)
-                ], 2);
-
-    return {box:box, nodeContentElements:[minusbox]}
-}
-
-function joinInfix(exprNodeUI, children, symbol, parentPrec) {
-    const boxes = [];
-    const symbols = [];
-
-    children.forEach((c, i) => {
-        if (i > 0) {
-            let symbolbox = new OperatorBox(symbol);
-            boxes.push(symbolbox);
-            symbols.push(symbolbox);
-        }
-        // Kind bekommt aktuelle Präzedenz
-         boxes.push(exprNodeUI.nodeToBox(c, parentPrec));
-    });
-
-    return {box:new HBox(boxes, 0), nodeContentElements:symbols};
-}
-
-NodeBoxCreators.sum = function(exprNodeUI, node, nodePrec) {
-    return joinInfix(exprNodeUI,node.children, "+", nodePrec);
-}
-
-NodeBoxCreators.product = function(exprNodeUI, node, nodePrec) {
-    return joinInfix(exprNodeUI,node.children, "·", nodePrec);
-}
-
-NodeBoxCreators.power = function(exprNodeUI, node, nodePrec) {
-    const box = new SuperScriptBox(
-        exprNodeUI.nodeToBox(node.children[0], nodePrec),
-        exprNodeUI.nodeToBox(node.children[1], nodePrec)
-    );
-    return {box:box, nodeContentElements:[]};
-}
-
-NodeBoxCreators.fraction = function(exprNodeUI, node, nodePrec) {
-    const box = new FractionBox(
-                    exprNodeUI.nodeToBox(node.children[0], nodePrec),
-                    exprNodeUI.nodeToBox(node.children[1], nodePrec)
-                );
-    return {box:box, nodeContentElements:[box]};
-}
-
-NodeBoxCreators.equals = function(exprNodeUI, node, nodePrec) {
-    const equalsbox = new TextBox(" = ");
-    const box = new HBox([
-                    exprNodeUI.nodeToBox(node.children[0], nodePrec),
-                    equalsbox,
-                    exprNodeUI.nodeToBox(node.children[1], nodePrec)
-                ]);
-    return {box:box, nodeContentElements:[equalsbox]};
-}
-
-NodeBoxCreators.DEFAULT = function(exprNodeUI, node, nodePrec) {
-    const textbox = new TextBox("<?>");
-    return {box:textbox, nodeContentElements:[textbox]}
-}
-
-
-
 class ExprViewer {
     constructor(exprNodeUI, width = 600, height = 400) {
         this.exprNodeUI = exprNodeUI;
@@ -336,6 +255,9 @@ Umform.Workspace = class{
         this.controller.onNodeClick = (node, state, e) => this.clickNode(node, e);
         this.controller.onNodeContextMenu = (node, state, e) => this.contextMenuNode(node, e);
 
+        this.exprViewerPreview = new ExprViewer(new Umform.ExprNodeUI(p('id{"preview"}'), new NodeStateController()), 1000, 200);
+        this.element.appendChild(this.exprViewerPreview.element);
+
         this.exprViewer = new ExprViewer(new Umform.ExprNodeUI(this.expr, this.controller), 1000, 500);
         this.element.appendChild(this.exprViewer.element);
 
@@ -476,6 +398,30 @@ Umform.Workspace = class{
         this.updateVisual();
     }
 
+    updateRulePreview() {
+        if (this.selectedRule === null) {
+            this.exprViewerPreview.setExprNodeUI(new Umform.ExprNodeUI(p('id{"preview"}'), new NodeStateController()));
+            return;
+        }
+
+        if (this.selectedRootNode === null) {
+            console.log("TODO");
+            return;
+        }
+
+        let possibilitys = [];
+        for (let binding of this.selectedRule.getMatchesWithUniqueSolutions(this.selectedRuleRootNode,this.currentMatches)) {
+            let bef = applyReplacement(binding,this.selectedRule.displayBefore);
+            let aft = applyReplacement(binding,this.selectedRule.displayAfter);
+            possibilitys.push({type:"__replacement_arrow__", children:[bef,aft]});
+        }
+        console.log(possibilitys);
+
+        let previewExpr = new Umform.ExprNode({type:"__vertical__", children: possibilitys});
+        this.exprViewerPreview.setExprNodeUI(new Umform.ExprNodeUI(previewExpr, new NodeStateController()));
+    }
+
+
     contextMenuNode(node, e) {
         let nextAction = this.getNextAction();
 
@@ -578,6 +524,7 @@ Umform.Workspace = class{
                 btn.style.display = btn.disabled ? "none" : "";
             }
         }
+        this.updateRulePreview();
     }
 
     prepareSelectNextNode() {
@@ -598,9 +545,9 @@ Umform.Workspace = class{
         let i = 0;
         for (let rule of this.rules) {
             if (rule.matches(this.selectedRuleRootNode)) {
-                let icon = Umform.Icons.iconFromRule(rule);
+                let icon = rule.createIcon();
                 icon.title = rule.title;
-                this.contextMenue.addItem(icon,(e)=>this.clickRule(rule,e),"bottom",i++);
+                this.contextMenue.addItem(icon,{onclick:(e)=>this.clickRule(rule,e),onmouseover:(e)=>console.log(e)},"bottom",i++);
             }
         }
     }
@@ -628,7 +575,7 @@ class ContextMenu {
         this.container.innerHTML = "";
     }
 
-    addItem(content,onClick,x,y,width="",height="") {
+    addItem(content,{onclick=null, onmouseover=null, onmouseleave=null, oncontextmenu=null},x,y,width="",height="") {
         const btn = document.createElement("div");
         //btn.style.backgroundColor = "white";
         //btn.style.outline = "1px solid black";
@@ -641,9 +588,28 @@ class ContextMenu {
         btn.style.overflow = "hidden";
         btn.addEventListener("click", (e) => {
             e.stopPropagation();
-            this.hide();
-            onClick();
+            if (onclick) {
+                let keepOpen = onclick(e);
+                if (!keepOpen) this.hide();
+            } else {
+                this.hide();
+            }
         });
+        if (onmouseover) {
+                btn.addEventListener("mouseover", (e) => {
+                onmouseover(e);
+            });
+        }
+        if (onmouseleave) {
+                btn.addEventListener("mouseleave", (e) => {
+                onmouseleave(e);
+            });
+        }
+        if (oncontextmenu) {
+                btn.addEventListener("contextmenu", (e) => {
+                oncontextmenu(e);
+            });
+        }
         btn.appendChild(content);
         this.items.push(btn);
         this.container.appendChild(btn);
@@ -676,7 +642,7 @@ class PyramidContextMenu extends ContextMenu {
         this.gap = gap ?? this.gridSize*0.1;
     }
 
-    addItem(content, onClick, side, index) {
+    addItem(content, {onclick=null, onmouseover=null, onmouseleave=null, oncontextmenu=null}, side, index) {
         let row = Math.floor(Math.sqrt(index));
         let column = (index - row**2) - row;
         let xPyramid = column*this.gridSize - 0.5*this.gridSize;
@@ -704,7 +670,7 @@ class PyramidContextMenu extends ContextMenu {
                 y = -this.gridSize/2 + 0.5*this.gap;
                 break;
         }
-        super.addItem(content,onClick,x,y,this.gridSize-this.gap, this.gridSize-this.gap);
+        super.addItem(content,{onclick, onmouseover, onmouseleave, oncontextmenu},x,y,this.gridSize-this.gap, this.gridSize-this.gap);
     }
 
 }

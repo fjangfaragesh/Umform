@@ -117,6 +117,7 @@ Umform.Icons.createCommutative = function(symbol, colors) {
 };
 
 Umform.Icons.iconFromRule = function(rule, colors) {
+    throw new Error("ich bin alt");
     let name = rule.name;
 
     if (name === "not.not") return Umform.Icons.createTextIcon2Lines("NOT","NOT",colors);

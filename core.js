@@ -180,7 +180,7 @@ Umform.getRule = function(ruleName) {
 
 
 Umform.Rule = class {
-    constructor({name, title, matchPattern, replacementPattern, matchCaptures, freeCaptures=[], selectOrder=[], isAutoRule=false}) {
+    constructor({name, title, matchPattern, replacementPattern, matchCaptures, freeCaptures=[], selectOrder=[], isAutoRule=false, displayBefore=null, displayAfter=null, createIconFunction=null}) {
         this.name = name;
         this.title = title;
         this.matchPattern = matchPattern;
@@ -189,6 +189,9 @@ Umform.Rule = class {
         this.freeCaptures = freeCaptures;
         this.selectOrder = selectOrder;
         this.isAutoRule = isAutoRule;
+        this.displayBefore = displayBefore ?? matchPattern;
+        this.displayAfter = displayAfter ?? replacementPattern;
+        this.createIconFunction = createIconFunction;
     }
 
     matches(expr) {
@@ -260,6 +263,13 @@ Umform.Rule = class {
             throw new Error("No match at index " + matchIndex);
         }
         return this.replace(binding,freeCaptureValues);
+    }
+
+    createIcon(colors) {
+        if (this.createIconFunction) {
+            return this.createIconFunction(colors);
+        }
+        return Umform.Icons.createTextIcon("?",40,colors);
     }
 }
 
