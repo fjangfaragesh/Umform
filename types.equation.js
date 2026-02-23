@@ -5,6 +5,9 @@ Umform.registerType(new class extends Umform.TypeDefinition {
     getPrecedence() {
         return 70;
     }
+    createBlanc() {
+        return new Umform.ExprNode({type: this.getName(), children: [new Umform.ExprNode({type:"_"}),new Umform.ExprNode({type:"_"})]});
+    }
     createBox(exprNodeUI, node, nodePrec) {
         const equalsbox = new TextBox(" = ");
         const box = new HBox([

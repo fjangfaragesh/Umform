@@ -103,6 +103,10 @@ function applyReplacement(binding, replacementPattern) {
             }
         }
 
+        if (node.type === "__calc__") {
+            return Umform.calc(node)
+        }
+
         return new Umform.ExprNode({
             type: node.type,
             data: structuredClone(node.data),
@@ -115,6 +119,7 @@ function applyReplacement(binding, replacementPattern) {
         for (let child of children) {
             if (child.type === "__capture__" && child.data.variadic) {
                 if (currentBinding.has(child.data.name)) {
+                    if (!(currentBinding.get(child.data.name) instanceof Array)) throw new Error("Variadic Capture " + child.data.name + " was not bound to an Array!");
                     childrenReplaced.push(...currentBinding.get(child.data.name).map(n => n.clone()));
                     continue;
                 }

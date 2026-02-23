@@ -36,6 +36,16 @@ Umform.NOperationTypeDefinition = class extends Umform.TypeDefinition {
     getOpSymbol() {
         throw new Error("implement me");
     }
+    createBlanc() {
+        console.log({
+            type: this.getName(),
+            children: [new Umform.ExprNode({type:"_"}),new Umform.ExprNode({type:"_"})]
+        })
+        return new Umform.ExprNode({
+            type: this.getName(),
+            children: [new Umform.ExprNode({type:"_"}),new Umform.ExprNode({type:"_"})]
+        });
+    }
 }
 
 Umform.registerType(new class extends Umform.TypeDefinition {
@@ -49,12 +59,22 @@ Umform.registerType(new class extends Umform.TypeDefinition {
     getPrecedence() {
         return 100;
     }
+    createBlanc(options) {
+        let name = "x";
+        if (options) {
+            if (options.name) {
+                name = options.name;
+            }
+        }
+        return new Umform.ExprNode({type: this.getName(),data: name});
+    }
     createBox(exprNodeUI, node, parentPrec) {
         const textbox = new TextBox(String(node.data));
         return {box:textbox, nodeContentElements:[textbox]}
     }
 }());
 
+// data: null (unlinked) or {"linkId":...} linked
 Umform.registerType(new class extends Umform.TypeDefinition {
     getName() {
         return "_";
@@ -65,6 +85,9 @@ Umform.registerType(new class extends Umform.TypeDefinition {
 
     getPrecedence() {
         return 100;
+    }
+    createBlanc() {
+        return new Umform.ExprNode({type: this.getName()});
     }
     createBox(exprNodeUI, node, parentPrec) {
         const rectBox = new RectBox(20, 20);
@@ -82,6 +105,9 @@ Umform.registerType(new class extends Umform.TypeDefinition {
     }
     getPrecedence() {
         return 100;
+    }
+    createBlanc() {
+        return new Umform.ExprNode({type: this.getName(),data: {name:"x",variadic:false}});
     }
     createBox(exprNodeUI, node, parentPrec) {
         let str = "<" + String(node.data.name) + (node.data.variadic ? "..." : "") + ">";
@@ -109,6 +135,9 @@ Umform.registerType(new class extends Umform.TypeDefinition {
     getPrecedence() {
         return 100;
     }
+    createBlanc() {
+        return new Umform.ExprNode({type: this.getName(), children: [new Umform.ExprNode({type:"_"}),new Umform.ExprNode({type:"_"}),new Umform.ExprNode({type:"_"})]});
+    }
     createBox(exprNodeUI, node, parentPrec) {
         const textbox1 = new TextBox("map:(");
         const captureV = exprNodeUI.nodeToBox(node.children[0], parentPrec);
@@ -122,6 +151,29 @@ Umform.registerType(new class extends Umform.TypeDefinition {
     }
 }());
 
+// calc(expression(...))
+Umform.registerType(new class extends Umform.TypeDefinition {
+    getName() {
+        return "__calc__";
+    }
+    getTitle() {
+        return "Calculation Node";
+    }
+    getPrecedence() {
+        return 100;
+    }
+    createBlanc() {
+        return new Umform.ExprNode({type: this.getName(), children: [new Umform.ExprNode({type:"_"}),new Umform.ExprNode({type:"_"})]});
+    }
+    createBox(exprNodeUI, node, parentPrec) {
+        const textbox1 = new TextBox("calc:(");
+        const content = exprNodeUI.nodeToBox(node.children[0], 0);
+        const textbox2 = new TextBox(")");
+        
+        return {box:new HBox([textbox1, content, textbox2]), nodeContentElements:[textbox1, textbox2]}
+    }
+}());
+
 // no function, only for UI x⇛y
 Umform.registerType(new class extends Umform.NOperationTypeDefinition {
     getName() {
@@ -129,6 +181,9 @@ Umform.registerType(new class extends Umform.NOperationTypeDefinition {
     }
     getTitle() {
         return "Replacement Arrow (no function, only for User Interface)";
+    }
+    createBlanc() {
+        return new Umform.ExprNode({type: this.getName(), children: [new Umform.ExprNode({type:"_"}),new Umform.ExprNode({type:"_"})]});
     }
     getPrecedence() {
         return 11;
@@ -149,6 +204,9 @@ Umform.registerType(new class extends Umform.TypeDefinition {
     getPrecedence() {
         return 10;
     }
+    createBlanc() {
+        return new Umform.ExprNode({type: this.getName(), children: [new Umform.ExprNode({type:"_"}),new Umform.ExprNode({type:"_"})]});
+    }
     createBox(exprNodeUI, node, parentPrec) {
         return {box:new VBox(Array.from(node.children,(c, i) => exprNodeUI.nodeToBox(c, 0)),10), nodeContentElements:[]}
     }
@@ -164,6 +222,9 @@ Umform.registerType(new class extends Umform.TypeDefinition {
     }
     getPrecedence() {
         return 10;
+    }
+    createBlanc() {
+        return new Umform.ExprNode({type: this.getName(), children: [new Umform.ExprNode({type:"_"}),new Umform.ExprNode({type:"_"})]});
     }
     createBox(exprNodeUI, node, parentPrec) {
         return {box:new HBox(Array.from(node.children,(c, i) => exprNodeUI.nodeToBox(c, 0)),4), nodeContentElements:[]}

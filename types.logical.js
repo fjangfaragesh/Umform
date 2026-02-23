@@ -7,6 +7,9 @@ Umform.registerType(new class extends Umform.TypeDefinition {
     getPrecedence() {
         return 90;
     }
+    createBlanc() {
+        return new Umform.ExprNode({type: this.getName(), children: [new Umform.ExprNode({type:"_"})]});
+    }
     createBox(exprNodeUI, node, nodePrec) {
         const box = new NotBox(exprNodeUI.nodeToBox(node.children[0], 0), 2);// nodePrec=0
 

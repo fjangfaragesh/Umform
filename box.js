@@ -245,11 +245,11 @@ class SuperScriptBox extends Box {
 }
 
 class FractionBox extends Box {
-    constructor(numerator, denominator, gap = 4, rule = 1) {
+    constructor(numerator, denominator, gap = 6, rule = 1) {
         super();
         this.numerator = numerator;
         this.denominator = denominator;
-        this.gap = gap;
+        this.gap = gap;     // Abstand vom Bruchstrich
         this.rule = rule;
 
         this.lineElement = null;
@@ -263,41 +263,70 @@ class FractionBox extends Box {
         this.width = Math.max(
             this.numerator.width,
             this.denominator.width
-        ) + 4;
+        ) + 6;
 
-        this.height =
-            this.numerator.height +
-            this.numerator.depth +
-            this.gap +
-            this.rule;
+        const numTotal =
+            this.numerator.height + this.numerator.depth;
 
-        this.depth =
-            this.denominator.height +
-            this.denominator.depth +
-            this.gap;
+        const denTotal =
+            this.denominator.height + this.denominator.depth;
+
+        // Abstand vom Bruchstrich
+        const numShift = this.gap + numTotal;
+        const denShift = this.gap + denTotal;
+
+        // Baseline liegt jetzt mittig
+        this.height = numShift;
+        this.depth  = denShift;
     }
 
     render(svg, x, baselineY) {
         const centerX = x + this.width / 2;
 
+        const numTotal =
+            this.numerator.height + this.numerator.depth;
+
+        const denTotal =
+            this.denominator.height + this.denominator.depth;
+
+        // Position Bruchstrich
+        const lineY =
+            baselineY
+            - this.gap/2
+            + this.rule/2;
+
+        // Zähler-Baseline
+        const numBaseline =
+            lineY
+            - this.gap
+            - this.numerator.depth;
+
         const numX = centerX - this.numerator.width / 2;
-        const numY = baselineY - this.gap - this.rule;
+        this.numerator.render(svg, numX, numBaseline);
 
-        this.numerator.render(svg, numX, numY);
+        // Bruchstrich
+        this.lineElement = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "line"
+        );
 
-        this.lineElement = document.createElementNS("http://www.w3.org/2000/svg", "line");
         this.lineElement.setAttribute("x1", x);
         this.lineElement.setAttribute("x2", x + this.width);
-        this.lineElement.setAttribute("y1", baselineY);
-        this.lineElement.setAttribute("y2", baselineY);
+        this.lineElement.setAttribute("y1", lineY);
+        this.lineElement.setAttribute("y2", lineY);
         this.lineElement.setAttribute("stroke", this.color);
         this.lineElement.setAttribute("stroke-width", this.rule);
+
         svg.appendChild(this.lineElement);
 
-        const denX = centerX - this.denominator.width / 2;
-        const denY = baselineY + this.gap + this.denominator.height;
+        // Nenner-Baseline
+        const denBaseline =
+            lineY
+            + this.gap
+            + this.denominator.height;
 
-        this.denominator.render(svg, denX, denY);
+        const denX = centerX - this.denominator.width / 2;
+        this.denominator.render(svg, denX, denBaseline);
     }
     
     setColor(color) {
@@ -527,10 +556,10 @@ class InteractiveBox extends Box {
         this.colors = Object.assign({
             defaultStroke: "transparent",
             defaultBG: "transparent",
-            defaultFG: "rgb(197, 197, 197)",
+            defaultFG: "rgb(0, 0, 0)",
             selectableStroke: "transparent",
             selectableBG: "transparent",
-            selectableFG: "rgb(0, 0, 0)",
+            selectableFG: "rgb(109, 18, 137)",
             selectedStroke: "rgb(195, 255, 200)",
             selectedBG: "rgba(0, 255, 21, 0.08)",
             selectedFG: "rgb(0, 220, 29)",
@@ -581,12 +610,9 @@ class InteractiveBox extends Box {
         });
 
         rect.addEventListener("click", (e) => {
-            e.stopPropagation();
             this.controller.click(this.node,e);
         });
         rect.addEventListener("contextmenu", (e) => {
-            e.stopPropagation();
-            e.preventDefault();
             this.controller.contextmenu(this.node,e);
         });
 

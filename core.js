@@ -11,7 +11,7 @@ Umform.ExprNode = class ExprNode {
     }
 
     clone() {
-        return new ExprNode({
+        return new Umform.ExprNode({
             type: this.type,
             data: structuredClone(this.data),
             children: this.children.map(c => c.clone())
@@ -19,13 +19,17 @@ Umform.ExprNode = class ExprNode {
     }
 
     cloneReplace(nodeToReplace, replacementNode) {
-        if (this === nodeToReplace) {
+        return this.cloneReplaceConditional((x)=>x===nodeToReplace, replacementNode);
+    }
+
+    cloneReplaceConditional(condition, replacementNode) {
+        if (condition(this)) {
             return replacementNode.clone();
         }
-        return new ExprNode({
+        return new Umform.ExprNode({
             type: this.type,
             data: structuredClone(this.data),
-            children: this.children.map(c => c.cloneReplace(nodeToReplace, replacementNode))
+            children: this.children.map(c => c.cloneReplaceConditional(condition, replacementNode))
         });
     }
 
@@ -121,13 +125,28 @@ Umform.TypeDefinition = class {
 
     }
     getName() {
-        throw new Error("implement me");
+        throw new Error("getName() must be implemented for TypeDefinition");
+    }
+    getTitle() {
+        return "no title (" + this.getName() + ")";
     }
     getPrecedence() {
-        throw new Error("implement me");
+        throw new Error("getPrecedence() must be implemented for TypeDefinition of " + this.getName());
+    }
+    createBlanc(options) {
+        throw new Error("createBlanc() must be implemented for TypeDefinition of " + this.getName());
     }
     createBox(exprNodeUI, node, parentPrec) {
-        throw new Error("implement me");
+        throw new Error("createBox() must be implemented for TypeDefinition of " + this.getName());
+    }
+
+    // overwrite, if node can calc
+    calc(data, childrenCalc) {
+        return new Umform.ExprNode({
+            type: this.getName(),
+            data: structuredClone(data),
+            children: childrenCalc
+        });
     }
 }
 
@@ -166,6 +185,13 @@ Umform.getRule = function(ruleName) {
     return Umform.RULES.get(ruleName);
 }
 
+Umform.uniqueIdCounter = 0;
+Umform.uniqueSessionId = Math.floor(Math.random()*1000000);
+Umform.getUniqueId = function() {
+    return Umform.uniqueSessionId + "." + Umform.uniqueSessionId++;
+}
+
+
 // basic operationen: 
 // sum(a,b,c,...); subtraktion gibt es nicht, a-b --> sum(a,neg(b))
 // neg(a)  --> -a
@@ -180,7 +206,7 @@ Umform.getRule = function(ruleName) {
 
 
 Umform.Rule = class {
-    constructor({name, title, matchPattern, replacementPattern, matchCaptures, freeCaptures=[], selectOrder=[], isAutoRule=false, displayBefore=null, displayAfter=null, createIconFunction=null}) {
+    constructor({name, title, matchPattern, replacementPattern, matchCaptures, freeCaptures=[], selectOrder=[], isAutoRule=false, displayBefore=null, displayAfter=null, createIconFunction=null, tags=new Set()}) {
         this.name = name;
         this.title = title;
         this.matchPattern = matchPattern;
@@ -192,6 +218,7 @@ Umform.Rule = class {
         this.displayBefore = displayBefore ?? matchPattern;
         this.displayAfter = displayAfter ?? replacementPattern;
         this.createIconFunction = createIconFunction;
+        this.tags = new Set(tags);
     }
 
     matches(expr) {
@@ -238,25 +265,32 @@ Umform.Rule = class {
     }
 
     replace(binding, freeCaptureValues = new Map()) {
+        // clone
+        binding = new Map(binding);
+        freeCaptureValues = new Map(freeCaptureValues);
+
+        for (let freeCaptureName of this.freeCaptures) {
+            if (!freeCaptureValues.has(freeCaptureName)) {
+                freeCaptureValues.set(freeCaptureName, new Umform.ExprNode({
+                    type:"_",
+                    data:{linkId: Umform.getUniqueId()}
+                }));
+            }
+        }
+
         for (let [key, value] of freeCaptureValues) {
             if (!this.freeCaptures.includes(key)) {
                 throw new Error("Capture " + key + " is not a free capture of this rule");
             }
             if (binding.has(key)) {
-                throw new Error("Capture " + key + " is already bound in the match");
+                throw new Error("Capture " + key + " is already bound with " + binding.get(key).stringify() + " in the match");
             }
             binding.set(key, value);
         }
-        console.log(binding);
         return applyReplacement(binding, this.replacementPattern);
     }
 
     apply(expr, matchIndex = 0, freeCaptureValues = new Map(), initialMatches) {
-        /*for (let freeCaptureName of this.freeCaptures) {
-            if (!freeCaptureValues.has(freeCaptureName)) {
-                freeCaptureValues.set(freeCaptureName, Umform.ExprNode.parse("_"));
-            }
-        }*/
         const matches = this.getMatches(expr, initialMatches);
         const binding = matches[matchIndex];
         if (!binding) {
@@ -271,6 +305,15 @@ Umform.Rule = class {
         }
         return Umform.Icons.createTextIcon("?",40,colors);
     }
+}
+
+Umform.calc = function(exprNode) {
+    if (exprNode.type === "__calc__") return Umform.calc(exprNode.children[0]);
+
+    let childrenCalc = exprNode.children.map((x)=>Umform.calc(x));
+
+    let type = Umform.getTypeDefinition(exprNode.type);
+    return type.calc(exprNode.data, childrenCalc);
 }
 
 
