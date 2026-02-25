@@ -45,21 +45,49 @@ Umform.ExprNode.parse = function (str) {
 
         let start = i;
         let depth = 0;
+        let inString = false;
+        let escape = false;
 
         while (i < str.length) {
-            if (str[i] === "{") depth++;
-            else if (str[i] === "}") {
-                depth--;
-                if (depth === 0) {
-                    i++;
-                    break;
+            const ch = str[i];
+
+            if (inString) {
+                if (escape) {
+                    escape = false;
+                } else if (ch === "\\") {
+                    escape = true;
+                } else if (ch === '"') {
+                    inString = false;
+                }
+            } else {
+                if (ch === '"') {
+                    inString = true;
+                } else if (ch === "{") {
+                    depth++;
+                } else if (ch === "}") {
+                    depth--;
+                    if (depth === 0) {
+                        i++;
+                        break;
+                    }
                 }
             }
+
             i++;
         }
 
-        const jsonStr = str.slice(start + 1, i - 1);
-        return JSON.parse(jsonStr);
+        if (depth !== 0) {
+            throw new Error("Unbalanced braces in JSON data");
+        }
+
+        const raw = str.slice(start + 1, i - 1).trim();
+
+        // Spezialfall: Wildcard
+        if (raw === "*") {
+            return Umform.ANY;
+        }
+
+        return JSON.parse(raw);
     }
 
     function parseChildren() {
@@ -168,7 +196,9 @@ Umform.ExprNode.stringify = function(node) {
     str = node.type;
 
     // Daten als JSON, falls vorhanden
-    if (node.data !== null) {
+    if (node.data === Umform.ANY) {
+        str += "{*}";
+    } else if (node.data !== null) {
         str += "{" + JSON.stringify(node.data) + "}";
     }
 

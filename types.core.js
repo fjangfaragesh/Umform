@@ -3,7 +3,7 @@ Umform.NOperationTypeDefinition = class extends Umform.TypeDefinition {
     constructor() {
         super();
     }
-    createBox(exprNodeUI, node, parentPrec) {
+    createBox(exprNodeUI, node, workSpace, parentPrec) {
         const boxes = [];
         const symbols = [];
 
@@ -14,7 +14,7 @@ Umform.NOperationTypeDefinition = class extends Umform.TypeDefinition {
 
         if (node.children.length === 1) {
             const textbox1 = new TextBox("(" + this.getOpSymbol() + ")(")
-            const childbox = exprNodeUI.nodeToBox(node.children[0], 0);
+            const childbox = exprNodeUI.nodeToBox(node.children[0], workSpace, 0);
             const textbox2 = new TextBox(")")
             const box = new HBox([textbox1,childbox,textbox2], 2);
 
@@ -28,7 +28,7 @@ Umform.NOperationTypeDefinition = class extends Umform.TypeDefinition {
                 symbols.push(symbolbox);
             }
             // Kind bekommt aktuelle Präzedenz
-            boxes.push(exprNodeUI.nodeToBox(c, parentPrec));
+            boxes.push(exprNodeUI.nodeToBox(c, workSpace, parentPrec));
         });
 
         return {box:new HBox(boxes, 0), nodeContentElements:symbols};
@@ -68,8 +68,14 @@ Umform.registerType(new class extends Umform.TypeDefinition {
         }
         return new Umform.ExprNode({type: this.getName(),data: name});
     }
-    createBox(exprNodeUI, node, parentPrec) {
-        const textbox = new TextBox(String(node.data));
+    createBox(exprNodeUI, node, workSpace, parentPrec) {
+        let name = node.data;
+        let idDesc = workSpace.identifierManager.get(name);
+        if (idDesc !== null && idDesc !== undefined) {
+            name = idDesc.shortSymbol;
+        }
+
+        const textbox = new TextBox(String(name));
         return {box:textbox, nodeContentElements:[textbox]}
     }
 }());
@@ -89,7 +95,7 @@ Umform.registerType(new class extends Umform.TypeDefinition {
     createBlanc() {
         return new Umform.ExprNode({type: this.getName()});
     }
-    createBox(exprNodeUI, node, parentPrec) {
+    createBox(exprNodeUI, node, workSpace, parentPrec) {
         const rectBox = new RectBox(20, 20);
         
         return {box:rectBox, nodeContentElements:[rectBox]}
@@ -109,11 +115,11 @@ Umform.registerType(new class extends Umform.TypeDefinition {
     createBlanc() {
         return new Umform.ExprNode({type: this.getName(),data: {name:"x",variadic:false}});
     }
-    createBox(exprNodeUI, node, parentPrec) {
+    createBox(exprNodeUI, node, workSpace, parentPrec) {
         let str = "<" + String(node.data.name) + (node.data.variadic ? "..." : "") + ">";
         if (node.children.length !== 0) {
             const textbox1 = new TextBox(str + "(");
-            const childbox = exprNodeUI.nodeToBox(node.children[0], 0);
+            const childbox = exprNodeUI.nodeToBox(node.children[0], workSpace, 0);
             console.log(node.children[0]);
             const textbox2 = new TextBox(")");
             return {box:new HBox([textbox1,childbox,textbox2], 0), nodeContentElements:[textbox1,textbox2]}
@@ -138,13 +144,39 @@ Umform.registerType(new class extends Umform.TypeDefinition {
     createBlanc() {
         return new Umform.ExprNode({type: this.getName(), children: [new Umform.ExprNode({type:"_"}),new Umform.ExprNode({type:"_"}),new Umform.ExprNode({type:"_"})]});
     }
-    createBox(exprNodeUI, node, parentPrec) {
+    createBox(exprNodeUI, node, workSpace, parentPrec) {
         const textbox1 = new TextBox("map:(");
-        const captureV = exprNodeUI.nodeToBox(node.children[0], parentPrec);
+        const captureV = exprNodeUI.nodeToBox(node.children[0], workSpace, parentPrec);
         const textbox2 = new TextBox(",");
-        const captureI = exprNodeUI.nodeToBox(node.children[1], parentPrec);
+        const captureI = exprNodeUI.nodeToBox(node.children[1], workSpace, parentPrec);
         const textbox3 = new TextBox("-=>");
-        const expr = exprNodeUI.nodeToBox(node.children[2], parentPrec);
+        const expr = exprNodeUI.nodeToBox(node.children[2], workSpace, parentPrec);
+        const textbox4 = new TextBox(")");
+        
+        return {box:new HBox([textbox1, captureV, textbox2, captureI, textbox3, expr, textbox4]), nodeContentElements:[textbox1, textbox2, textbox3, textbox4]}
+    }
+}());
+
+Umform.registerType(new class extends Umform.TypeDefinition {
+    getName() {
+        return "__replace__";
+    }
+    getTitle() {
+        return "Replace (Pattern Replacement)";
+    }
+    getPrecedence() {
+        return 100;
+    }
+    createBlanc() {
+        return new Umform.ExprNode({type: this.getName(), children: [new Umform.ExprNode({type:"_"}),new Umform.ExprNode({type:"_"}),new Umform.ExprNode({type:"_"})]});
+    }
+    createBox(exprNodeUI, node, workSpace, parentPrec) {
+        const textbox1 = new TextBox("replace:(");
+        const captureV = exprNodeUI.nodeToBox(node.children[0], workSpace, parentPrec);
+        const textbox2 = new TextBox(",");
+        const captureI = exprNodeUI.nodeToBox(node.children[1], workSpace, parentPrec);
+        const textbox3 = new TextBox("-=>");
+        const expr = exprNodeUI.nodeToBox(node.children[2], workSpace, parentPrec);
         const textbox4 = new TextBox(")");
         
         return {box:new HBox([textbox1, captureV, textbox2, captureI, textbox3, expr, textbox4]), nodeContentElements:[textbox1, textbox2, textbox3, textbox4]}
@@ -163,16 +195,76 @@ Umform.registerType(new class extends Umform.TypeDefinition {
         return 100;
     }
     createBlanc() {
-        return new Umform.ExprNode({type: this.getName(), children: [new Umform.ExprNode({type:"_"}),new Umform.ExprNode({type:"_"})]});
+        return new Umform.ExprNode({type: this.getName(), children: [new Umform.ExprNode({type:"_"})]});
     }
-    createBox(exprNodeUI, node, parentPrec) {
+    createBox(exprNodeUI, node, workSpace, parentPrec) {
         const textbox1 = new TextBox("calc:(");
-        const content = exprNodeUI.nodeToBox(node.children[0], 0);
+        const content = exprNodeUI.nodeToBox(node.children[0], workSpace, 0);
         const textbox2 = new TextBox(")");
         
         return {box:new HBox([textbox1, content, textbox2]), nodeContentElements:[textbox1, textbox2]}
     }
 }());
+
+/*
+Umform.registerRule(new Umform.Rule({
+    name: "calc.apply",
+    title: "Apply Calc Auto",
+    matchPattern: p('__calc__(<x>)'),
+    replacementPattern: p('__calc__(<x>)'),
+    matchCaptures: ["x"],
+    freeCaptures: [],
+    selectOrder: [],
+    isAutoRule: true,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines('AUTO','CALC',colors),
+    tags:["make_valid"]
+}));*/
+
+Umform.registerType(new class extends Umform.TypeDefinition {
+    getName() {
+        return "extraBrackets";
+    }
+    getTitle() {
+        return "Extra Brackets";
+    }
+    getPrecedence() {
+        return 100;
+    }
+    createBlanc() {
+        return new Umform.ExprNode({type: this.getName(), children: [new Umform.ExprNode({type:"_"})]});
+    }
+    createBox(exprNodeUI, node, workSpace, parentPrec) {
+        const content = exprNodeUI.nodeToBox(node.children[0], workSpace, 0);
+        const pBox = new ParenthesisBox(content,{strokeWidth:3.0,stringOpen:"❪",stringClose:"❫"});
+        return {box:pBox, nodeContentElements:[pBox]}
+    }
+}());
+
+Umform.registerRule(new Umform.Rule({
+    name: "extraBrackets.create",
+    title: "Create Extra Brackets",
+    matchPattern: p('<x>'),
+    replacementPattern: p('extraBrackets(<x>)'),
+    matchCaptures: ["x"],
+    freeCaptures: [],
+    selectOrder: [],
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon("❪ ❫",40,colors),
+    tags:["protect"]
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "extraBrackets.remove",
+    title: "Remove Extra Brackets",
+    matchPattern: p('extraBrackets(<x>)'),
+    replacementPattern: p('<x>'),
+    matchCaptures: ["x"],
+    freeCaptures: [],
+    selectOrder: [],
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon("x❪ ❫x",40,colors),
+    tags:["reshape"]
+}));
 
 // no function, only for UI x⇛y
 Umform.registerType(new class extends Umform.NOperationTypeDefinition {
@@ -207,8 +299,8 @@ Umform.registerType(new class extends Umform.TypeDefinition {
     createBlanc() {
         return new Umform.ExprNode({type: this.getName(), children: [new Umform.ExprNode({type:"_"}),new Umform.ExprNode({type:"_"})]});
     }
-    createBox(exprNodeUI, node, parentPrec) {
-        return {box:new VBox(Array.from(node.children,(c, i) => exprNodeUI.nodeToBox(c, 0)),10), nodeContentElements:[]}
+    createBox(exprNodeUI, node, workSpace, parentPrec) {
+        return {box:new VBox(Array.from(node.children,(c, i) => exprNodeUI.nodeToBox(c, workSpace, 0)),10), nodeContentElements:[]}
     }
 }());
 
@@ -226,7 +318,7 @@ Umform.registerType(new class extends Umform.TypeDefinition {
     createBlanc() {
         return new Umform.ExprNode({type: this.getName(), children: [new Umform.ExprNode({type:"_"}),new Umform.ExprNode({type:"_"})]});
     }
-    createBox(exprNodeUI, node, parentPrec) {
-        return {box:new HBox(Array.from(node.children,(c, i) => exprNodeUI.nodeToBox(c, 0)),4), nodeContentElements:[]}
+    createBox(exprNodeUI, node, workSpace, parentPrec) {
+        return {box:new HBox(Array.from(node.children,(c, i) => exprNodeUI.nodeToBox(c, workSpace, 0)),4), nodeContentElements:[]}
     }
 }());

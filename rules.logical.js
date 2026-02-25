@@ -21,7 +21,7 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: ['x'],
     freeCaptures: [],
     selectOrder: [],
-    isAutoRule: false,
+    isAutoRule: true,
     createIconFunction: (colors) => Umform.Icons.createTextIcon("o̅̅",40,colors),
     tags:["logical","shorten"]
 }));
@@ -30,7 +30,7 @@ Umform.registerRule(new Umform.Rule({
     name: "not.not.reversed",
     title: "Double Negation (reversed)",
     matchPattern: p('<x>'),
-    replacementPattern: p('not(not(<x>))'),
+    replacementPattern: p('not(extraBrackets(not(<x>)))'),
     matchCaptures: ['x'],
     freeCaptures: [],
     selectOrder: [],
@@ -47,7 +47,7 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: [],
     freeCaptures: [],
     selectOrder: [],
-    isAutoRule: false,
+    isAutoRule: true,
     createIconFunction: (colors) => Umform.Icons.createTextIcon("1",40,colors),
     tags:["logical","shorten"]
 }));
@@ -56,7 +56,7 @@ Umform.registerRule(new Umform.Rule({
     name: "not.false.reversed",
     title: "Negation of False (reversed)",
     matchPattern: p('id{"true"}'),
-    replacementPattern: p('not(id{"false"})'),
+    replacementPattern: p('not(extraBrackets(id{"false"}))'),
     matchCaptures: [],
     freeCaptures: [],
     selectOrder: [],
@@ -73,7 +73,7 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: [],
     freeCaptures: [],
     selectOrder: [],
-    isAutoRule: false,
+    isAutoRule: true,
     createIconFunction: (colors) => Umform.Icons.createTextIcon("0",40,colors),
     tags:["logical","shorten"]
 }));
@@ -82,7 +82,7 @@ Umform.registerRule(new Umform.Rule({
     name: "not.true.reversed",
     title: "Negation of True (reversed)",
     matchPattern: p('id{"false"}'),
-    replacementPattern: p('not(id{"true"})'),
+    replacementPattern: p('not(extraBrackets(id{"true"}))'),
     matchCaptures: [],
     freeCaptures: [],
     selectOrder: [],
@@ -143,6 +143,19 @@ Umform.registerRule(new Umform.Rule({
     isAutoRule: true,
     createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines('ASS','∧',colors),
     tags:["logical","shorten"]
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "and.extraBrackets",
+    title: "Create Extra Brackets in And",
+    matchPattern: p('and(<left>...,<start>,<middle>...,<end>,<right>...)'),
+    replacementPattern: p('and(<left>...,extraBrackets(and(<start>,<middle>...,<end>)),<right>...)'),
+    matchCaptures: ["start","end","left","middle","right"],
+    freeCaptures: [],
+    selectOrder: [p('<start>'),p('<end>')],
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines('a∧❪b∧c❫∧d','⇛',colors),
+    tags:["logical","protect"]
 }));
 
 Umform.registerRule(new Umform.Rule({
@@ -327,6 +340,19 @@ Umform.registerRule(new Umform.Rule({
     isAutoRule: true,
     createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines('ASS','∨',colors),
     tags:["logical","shorten"]
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "or.extraBrackets",
+    title: "Create Extra Brackets in Or",
+    matchPattern: p('or(<left>...,<start>,<middle>...,<end>,<right>...)'),
+    replacementPattern: p('or(<left>...,extraBrackets(or(<start>,<middle>...,<end>)),<right>...)'),
+    matchCaptures: ["start","end","left","middle","right"],
+    freeCaptures: [],
+    selectOrder: [p('<start>'),p('<end>')],
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines('a∨❪b∨c❫∨d','⇛',colors),
+    tags:["logical","protect"]
 }));
 
 Umform.registerRule(new Umform.Rule({

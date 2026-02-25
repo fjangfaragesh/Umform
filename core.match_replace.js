@@ -30,7 +30,7 @@ function matchAll(pattern, expr, initialBindings = new Set([new Map()])) {
             return new Set(); // unterschiedliche Typen können nicht gematcht werden
         }
         
-        if (JSON.stringify(pn.data) !== JSON.stringify(en.data)) {
+        if (JSON.stringify(pn.data) !== JSON.stringify(en.data) && pn.data !== Umform.ANY) {
             return new Set(); // knoten mit unterschiedlichen Daten sind verschieden
         }
 
@@ -103,15 +103,23 @@ function applyReplacement(binding, replacementPattern) {
             }
         }
 
-        if (node.type === "__calc__") {
-            return Umform.calc(node)
-        }
-
-        return new Umform.ExprNode({
+        let result = new Umform.ExprNode({
             type: node.type,
-            data: structuredClone(node.data),
+            data: Umform.cloneData(node.data),
             children: replaceChildren(currentBinding, node.children)
         });
+
+        /*
+        if (result.type === "__calc__") {
+            return Umform.calc(result)
+        }
+        */
+
+        if (result.type === "__replace__") {
+            return result.children[2].cloneReplaceConditional((n)=>n.equals(result.children[0]),result.children[1]);
+        }
+
+        return result;
     }
 
     function replaceChildren(currentBinding, children) {

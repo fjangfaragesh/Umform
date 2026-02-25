@@ -10,8 +10,8 @@ Umform.registerType(new class extends Umform.TypeDefinition {
     createBlanc() {
         return new Umform.ExprNode({type: this.getName(), children: [new Umform.ExprNode({type:"_"})]});
     }
-    createBox(exprNodeUI, node, nodePrec) {
-        const box = new NotBox(exprNodeUI.nodeToBox(node.children[0], 0), 2);// nodePrec=0
+    createBox(exprNodeUI, node, workSpace, nodePrec) {
+        const box = new NotBox(exprNodeUI.nodeToBox(node.children[0], workSpace, 0), 2);// nodePrec=0
 
         return {box:box, nodeContentElements:[box]}
     }

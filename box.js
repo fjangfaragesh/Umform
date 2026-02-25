@@ -449,8 +449,8 @@ class ParenthesisBox extends Box {
         this.useStretch = false;
         this.color = "black";
 
-        this.leftText = new TextBox("(");
-        this.rightText = new TextBox(")");
+        this.leftText = new TextBox(options.stringOpen ?? "(");
+        this.rightText = new TextBox(options.stringClose ?? ")");
 
         this.leftPath = null;
         this.rightPath = null;

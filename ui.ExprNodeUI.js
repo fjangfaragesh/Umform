@@ -1,6 +1,6 @@
 Umform.ExprNodeUI = class {
 
-    constructor(node, controller=new Umform.NodeStateController()) {
+    constructor(node, workSpace, controller=new Umform.NodeStateController()) {
         this.node = node;
         this.controller = controller;
 
@@ -11,15 +11,15 @@ Umform.ExprNodeUI = class {
 
         this.selectedNode = null;
 
-        this.render();
+        this.render(workSpace);
     }
 
     // ---------- Public ----------
 
-    render() {
+    render(workSpace) {
         this.svg.innerHTML = "";
 
-        const box = this.nodeToBox(this.node);
+        const box = this.nodeToBox(this.node, workSpace);
         box.layout(this.ctx);
 
         const padding = 10;
@@ -37,13 +37,13 @@ Umform.ExprNodeUI = class {
 
     // ---------- Core Conversion ----------
 
-    nodeToBox(node, parentPrec = 0) {
+    nodeToBox(node, workSpace, parentPrec = 0) {
         const nodePrec = Umform.getTypeDefinition(node.type).getPrecedence();
 
         let box;
         let nodeContentElements = [];// <--- das hier muss fill unterstützen
 
-        let result = Umform.getTypeDefinition(node.type).createBox(this, node, nodePrec);
+        let result = Umform.getTypeDefinition(node.type).createBox(this, node, workSpace, nodePrec);
         box = result.box;
         nodeContentElements = result.nodeContentElements;
         

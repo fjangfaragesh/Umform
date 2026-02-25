@@ -42,6 +42,13 @@ Umform.ExprViewer = class {
         this.container.appendChild(exprNodeUI.element);
     }
 
+    setSize(width, height) {
+        this.width = width;
+        this.height = height;
+        this.svg.setAttribute("width", width);
+        this.svg.setAttribute("height", height);
+    }
+
     updateTransform() {
         this.container.setAttribute(
             "transform",

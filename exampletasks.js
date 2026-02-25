@@ -118,5 +118,14 @@ const EXAMPLE_TASKS = [
     "taskPreview": "¬(x ↔ y)",
     "solution": "or(and(id{\"x\"},not(id{\"y\"})),and(not(id{\"x\"}),id{\"y\"}))",
     "solutionPreview": "(x ∧ ¬y) ∨ (¬x ∧ y)"
+  },
+  {
+    "task": "fraction(sum(power(id{\"x\"},number{3}),neg(product(number{3},power(id{\"x\"},number{2}))),product(neg(number{10}),id{\"x\"}),number{24}),sum(id{\"x\"},neg(number{2})))",
+    "taskPreview": "Poly Div Test",
+    "solution": "sum(power(id{\"x\"},number{2}),neg(id{\"x\"}),neg(number{12}))",
+    "solutionPreview": "?"
   }
+
+
+  
 ];

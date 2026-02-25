@@ -1,5 +1,14 @@
 const Umform = {};
 
+Umform.ANY = Symbol("any");
+
+Umform.cloneData = function(data) {
+    if (data === Umform.ANY) {
+        return Umform.ANY;
+    }
+    return structuredClone(data);
+}
+
 Umform.ExprNode = class ExprNode {
     // type: string
     // children: ExprNode array.
@@ -13,7 +22,7 @@ Umform.ExprNode = class ExprNode {
     clone() {
         return new Umform.ExprNode({
             type: this.type,
-            data: structuredClone(this.data),
+            data: Umform.cloneData(this.data),
             children: this.children.map(c => c.clone())
         });
     }
@@ -28,8 +37,22 @@ Umform.ExprNode = class ExprNode {
         }
         return new Umform.ExprNode({
             type: this.type,
-            data: structuredClone(this.data),
+            data: Umform.cloneData(this.data),
             children: this.children.map(c => c.cloneReplaceConditional(condition, replacementNode))
+        });
+    }
+
+    // if func returns null: clone, else use return value
+    cloneReplaceByFunction(func) {
+        let fv = func(this);
+        console.log(fv !== null ? fv.stringify() : fv)
+        if (fv) {
+            return fv;
+        }
+        return new Umform.ExprNode({
+            type: this.type,
+            data: Umform.cloneData(this.data),
+            children: this.children.map(c => c.cloneReplaceByFunction(func))
         });
     }
 
@@ -136,7 +159,7 @@ Umform.TypeDefinition = class {
     createBlanc(options) {
         throw new Error("createBlanc() must be implemented for TypeDefinition of " + this.getName());
     }
-    createBox(exprNodeUI, node, parentPrec) {
+    createBox(exprNodeUI, node, workSpace, parentPrec) {
         throw new Error("createBox() must be implemented for TypeDefinition of " + this.getName());
     }
 
@@ -144,7 +167,7 @@ Umform.TypeDefinition = class {
     calc(data, childrenCalc) {
         return new Umform.ExprNode({
             type: this.getName(),
-            data: structuredClone(data),
+            data: Umform.cloneData(data),
             children: childrenCalc
         });
     }
@@ -314,6 +337,26 @@ Umform.calc = function(exprNode) {
 
     let type = Umform.getTypeDefinition(exprNode.type);
     return type.calc(exprNode.data, childrenCalc);
+}
+
+Umform.runAutoRules = function(exprNode, autoRules=Umform.AUTO_RULES, maxCycles=10000) {
+    let i = 0;
+    while (i < maxCycles) {
+        let found = false;
+        for (let rule of autoRules) {
+            let targetNode = exprNode.findAll(n => rule.matches(n))[0];
+            if (!targetNode) continue;
+            
+            let replaced = rule.apply(targetNode, 0);
+            exprNode = exprNode.cloneReplace(targetNode, replaced);
+            i++;
+            found = true;
+        }
+        if (!found) {
+            break;
+        }
+    }
+    return exprNode;
 }
 
 

@@ -1,3 +1,18 @@
+// TODO verschieb mich zu rules.math.complex, variablen richtig benennen (complex.i)
+Umform.registerRule(new Umform.Rule({
+    name: "math.complex.iSquare",
+    title: "i^2 = -1",
+    matchPattern: p('power(id{"math.constant.i"},number{2})'),
+    replacementPattern: p('neg(number{1})'),
+    matchCaptures: [],
+    freeCaptures: [],
+    selectOrder: [],
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines("i^1","-1",colors),
+    tags:["math.complex","shorten"]
+}));
+
+
 // sum
 Umform.registerRule(new Umform.Rule({
     name: "sum.empty",
@@ -51,6 +66,19 @@ Umform.registerRule(new Umform.Rule({
 }));
 
 Umform.registerRule(new Umform.Rule({
+    name: "sum.extraBrackets",
+    title: "Create Extra Brackets in Sum",
+    matchPattern: p('sum(<left>...,<start>,<middle>...,<end>,<right>...)'),
+    replacementPattern: p('sum(<left>...,extraBrackets(sum(<start>,<middle>...,<end>)),<middle>...,<right>...)'),
+    matchCaptures: ["start","end","left","middle","right"],
+    freeCaptures: [],
+    selectOrder: [p('<start>'),p('<end>')],
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines('a+❪b+c❫+d','⇛',colors),
+    tags:["math.basic","protect"]
+}));
+
+Umform.registerRule(new Umform.Rule({
     name: "sum.zero",
     title: "Addition of Zero",
     matchPattern: p('sum(<left>...,number{0},<right>...)'),
@@ -67,7 +95,7 @@ Umform.registerRule(new Umform.Rule({
     name: "sum.zero",
     title: "Addition of Zero Reversed",
     matchPattern: p('<x>'),
-    replacementPattern: p('sum(<x>,0)'),
+    replacementPattern: p('sum(<x>,extraBrackets(number{0}))'),
     matchCaptures: ["left","right"],
     freeCaptures: [],
     selectOrder: [],
@@ -80,7 +108,7 @@ Umform.registerRule(new Umform.Rule({
     name: "sum.inverse",
     title: "Addition of Negative",
     matchPattern: p('sum(<left>...,<x>,<middle>...,neg(<x>),<right>...)'),
-    replacementPattern: p('sum(<left>...,<right>...)'),
+    replacementPattern: p('sum(<left>...,<middle>...,<right>...)'),
     matchCaptures: ["x","left","middle","right"],
     freeCaptures: [],
     selectOrder: [p('<x>')],
@@ -93,7 +121,7 @@ Umform.registerRule(new Umform.Rule({
     name: "sum.inverse2",
     title: "Addition of Negative",
     matchPattern: p('sum(<left>...,neg(<x>),<middle>...,<x>,<right>...)'),
-    replacementPattern: p('sum(<left>...,<right>...)'),
+    replacementPattern: p('sum(<left>...,<middle>...,<right>...)'),
     matchCaptures: ["x","left","middle","right"],
     freeCaptures: [],
     selectOrder: [p('<x>')],
@@ -106,12 +134,51 @@ Umform.registerRule(new Umform.Rule({
     name: "sum.inverse.reversed",
     title: "Addition of Negative Reversed",
     matchPattern: p('<x>'),
-    replacementPattern: p('sum(<x>,<free>,neg(<free>))'),
+    replacementPattern: p('sum(sum(<x>,neg(<free>)),extraBrackets(<free>))'),
     matchCaptures: ["x"],
     freeCaptures: ["free"],
     selectOrder: [],
     isAutoRule: false,
-    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines('⇛x-x','',colors),
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines('⇛-x+x','',colors),
+    tags:["math.basic","extend"]
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "sum.same",
+    title: "Addition of two same Summands",
+    matchPattern: p('sum(<left>...,<x>,<middle>...,<x>,<right>...)'),
+    replacementPattern: p('sum(<left>...,product(number{2},<x>),<middle>...,<right>...)'),
+    matchCaptures: ["x","left","middle","right"],
+    freeCaptures: [],
+    selectOrder: [p('<x>')],
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines('x+x','',colors),
+    tags:["math.basic","shorten"]
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "sum.same.reversed",
+    title: "Addition of two same Summands (reversed)",
+    matchPattern: p('product(<left>...,number{2},<right>...)'),
+    replacementPattern: p('sum(product(<left>...,<right>...))'),
+    matchCaptures: ["x","left","right"],
+    freeCaptures: [],
+    selectOrder: [],
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines('⇛x+x','',colors),
+    tags:["math.basic","reshape"]
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "sum.number.split",
+    title: "Split Number into Sum",
+    matchPattern: p('<x>number{*}'),
+    replacementPattern: p('sum(__calc__(sum(<x>, neg(<free>))),<free>)'),
+    matchCaptures: ["x"],
+    freeCaptures: ["free"],
+    selectOrder: [],
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines('4⇛2+2','SPLIT',colors),
     tags:["math.basic","extend"]
 }));
 
@@ -125,7 +192,7 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: ['x'],
     freeCaptures: [],
     selectOrder: [],
-    isAutoRule: false,
+    isAutoRule: true,
     createIconFunction: (colors) => Umform.Icons.createTextIcon("--",40,colors),
     tags:["math.basic","shorten"]
 }));
@@ -134,7 +201,7 @@ Umform.registerRule(new Umform.Rule({
     name: "neg.neg.reversed",
     title: "Double Negative (Reversed)",
     matchPattern: p('<x>'),
-    replacementPattern: p('neg(neg(<x>))'),
+    replacementPattern: p('neg(extraBrackets(neg(<x>)))'),
     matchCaptures: ['x'],
     freeCaptures: [],
     selectOrder: [],
@@ -151,7 +218,7 @@ Umform.registerRule(new Umform.Rule({
     matchCaptures: [],
     freeCaptures: [],
     selectOrder: [],
-    isAutoRule: false,
+    isAutoRule: true,
     createIconFunction: (colors) => Umform.Icons.createTextIcon("-0",40,colors),
     tags:["math.basic","shorten"]
 }));
@@ -282,9 +349,21 @@ Umform.registerRule(new Umform.Rule({
     freeCaptures: [],
     selectOrder: [p('product(<x>...)')],
     isAutoRule: true,
-    isAutoRule: true,
     createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines('ASS','·',colors),
     tags:["math.basic","shorten"]
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "product.extraBrackets",
+    title: "Create Extra Brackets in Product",
+    matchPattern: p('product(<left>...,<start>,<middle>...,<end>,<right>...)'),
+    replacementPattern: p('product(<left>...,extraBrackets(product(<start>,<middle>...,<end>)),<right>...)'),
+    matchCaptures: ["start","end","left","middle","right"],
+    freeCaptures: [],
+    selectOrder: [p('<start>'),p('<end>')],
+    isAutoRule: false,
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines('a·❪b·c❫·d','⇛',colors),
+    tags:["math.basic","protect"]
 }));
 
 Umform.registerRule(new Umform.Rule({
@@ -317,7 +396,7 @@ Umform.registerRule(new Umform.Rule({
     name: "product.one.reversed",
     title: "Product with One Reversed",
     matchPattern: p('<x>'),
-    replacementPattern: p('product(<x>,number{1})'),
+    replacementPattern: p('product(<x>,extraBrackets(number{1}))'),
     matchCaptures: ["x"],
     freeCaptures: [],
     selectOrder: [],
@@ -394,12 +473,12 @@ Umform.registerRule(new Umform.Rule({
     name: "fraction.identity.reversed",
     title: "Divide by One (Reversed)",
     matchPattern: p('<x>'),
-    replacementPattern: p('fraction(<x>,number{1})'),
+    replacementPattern: p('fraction(<x>,extraBrackets(number{1}))'),
     matchCaptures: ["x"],
     freeCaptures: [],
     selectOrder: [],
     createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines("⇛x/1","IDENT",colors),
-    tags:["math.basic","shorten"]
+    tags:["math.basic","extend"]
 }));
 
 Umform.registerRule(new Umform.Rule({
@@ -431,7 +510,7 @@ Umform.registerRule(new Umform.Rule({
     name: "fraction.selfDivision.reversed",
     title: "Self Division (reversed)",
     matchPattern: p('number{1}'),
-    replacementPattern: p('fraction(<free>,<free>)'),
+    replacementPattern: p('fraction(extraBrackets(<free>),extraBrackets(<free>))'),
     matchCaptures: [],
     freeCaptures: ["free"],
     selectOrder: [],
@@ -479,9 +558,9 @@ Umform.registerRule(new Umform.Rule({
 Umform.registerRule(new Umform.Rule({
     name: "fraction.extendFraction",
     title: "Extend Fraction",
-    matchPattern: p('fraction(<numerator>,<divisor>)'),
-    replacementPattern: p('fraction(product(<numerator>,<free>),product(<divisor>,<free>))'),
-    matchCaptures: ["numerator","divisor"],
+    matchPattern: p('fraction(<numerator>,<denumerator>)'),
+    replacementPattern: p('fraction(product(<numerator>,<free>),product(<denumerator>,<free>))'),
+    matchCaptures: ["numerator","denumerator"],
     freeCaptures: ["free"],
     selectOrder: [],
     createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines("EXTND","FRACT",colors),
@@ -501,7 +580,7 @@ Umform.registerRule(new Umform.Rule({
 }));
 
 Umform.registerRule(new Umform.Rule({
-    name: "fraction.nested.divisor",
+    name: "fraction.nested.denumerator",
     title: "Zero Numerator",
     matchPattern: p('fraction(<x>,fraction(<y>,<z>))'),
     replacementPattern: p('fraction(product(<x>,<z>),<y>)'),
@@ -516,7 +595,7 @@ Umform.registerRule(new Umform.Rule({
     name: "fraction.sumOfFractions",
     title: "Sum of Fractions",
     matchPattern: p('sum(<left>...,fraction(<a>,<b>),<middle>...,fraction(<c>,<d>),<right>...)'),
-    replacementPattern: p('sum(<left>...,fraction(sum(product(<a>,<d>),product(<c>,<b>)),product(<b>,<d>)),<right>...)'),
+    replacementPattern: p('sum(<left>...,fraction(sum(product(<a>,<d>),product(<c>,<b>)),product(<b>,<d>)),<middle>...,<right>...)'),
     matchCaptures: ["a","b","c","d","left","middle","right"],
     freeCaptures: [],
     selectOrder: [p('fraction(<a>,<b>)'),p('fraction(<c>,<d>)')],
@@ -525,10 +604,34 @@ Umform.registerRule(new Umform.Rule({
 }));
 
 Umform.registerRule(new Umform.Rule({
+    name: "fraction.sumOfFraction",
+    title: "Sum of Fraction",
+    matchPattern: p('sum(<left>...,<a>,<middle>...,fraction(<b>,<c>),<right>...)'),
+    replacementPattern: p('sum(<left>...,fraction(sum(product(<a>,<c>),<b>),<c>),<right>...)'),
+    matchCaptures: ["a","b","c","left","middle","right"],
+    freeCaptures: [],
+    selectOrder: [p('fraction(<b>,<c>)'),p('<a>')],
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines("a+b/c","SUM",colors),
+    tags:["math.basic","reshape"]
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "fraction.sumOfFraction2",
+    title: "Sum of Fraction",
+    matchPattern: p('sum(<left>...,fraction(<a>,<b>),<middle>...,<c>,<right>...)'),
+    replacementPattern: p('sum(<left>...,fraction(sum(<a>,product(<c>,<b>)),<b>),<middle>...,<right>...)'),
+    matchCaptures: ["a","b","c","left","middle","right"],
+    freeCaptures: [],
+    selectOrder: [p('fraction(<a>,<b>)'),p('<c>')],
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines("a/b+c","SUM",colors),
+    tags:["math.basic","reshape"]
+}));
+
+Umform.registerRule(new Umform.Rule({
     name: "fraction.productOfFractions",
     title: "Product of Fractions",
     matchPattern: p('product(<left>...,fraction(<a>,<b>),<middle>...,fraction(<c>,<d>),<right>...)'),
-    replacementPattern: p('product(<left>...,fraction(product(<a>,<c>),product(<b>,<d>)),<right>...)'),
+    replacementPattern: p('product(<left>...,fraction(product(<a>,<c>),product(<b>,<d>)),<middle>...,<right>...)'),
     matchCaptures: ["a","b","c","d","left","middle","right"],
     freeCaptures: [],
     selectOrder: [p('fraction(<a>,<b>)'),p('fraction(<c>,<d>)')],
@@ -540,7 +643,7 @@ Umform.registerRule(new Umform.Rule({
     name: "fraction.productXFraction",
     title: "Product of Fraction",
     matchPattern: p('product(<left>...,<a>,<middle>...,fraction(<b>,<c>),<right>...)'),
-    replacementPattern: p('product(<left>...,fraction(product(<a>,<b>),product(<c>)),<right>...)'),
+    replacementPattern: p('product(<left>...,fraction(product(<a>,<b>),product(<c>)),<middle>...,<right>...)'),
     matchCaptures: ["a","b","c","left","middle","right"],
     freeCaptures: [],
     selectOrder: [p('<a>'),p('fraction(<b>,<c>)')],
@@ -552,7 +655,7 @@ Umform.registerRule(new Umform.Rule({
     name: "fraction.productXFraction2",
     title: "Product of Fraction",
     matchPattern: p('product(<left>...,fraction(<a>,<b>),<middle>...,<c>,<right>...)'),
-    replacementPattern: p('product(<left>...,fraction(product(<a>,<c>),product(<b>)),<right>...)'),
+    replacementPattern: p('product(<left>...,fraction(product(<a>,<c>),product(<b>)),<middle>...,<right>...)'),
     matchCaptures: ["a","b","c","left","middle","right"],
     freeCaptures: [],
     selectOrder: [p('<c>'),p('fraction(<a>,<b>)')],
@@ -563,8 +666,8 @@ Umform.registerRule(new Umform.Rule({
 Umform.registerRule(new Umform.Rule({
     name: "fraction.split",
     title: "Split Fraction",
-    matchPattern: p('fraction(sum(<left>...,<beforeSplit>,<afterSplit>,<right>...),<divisor>)'),
-    replacementPattern: p('sum(fraction(sum(<left>...,<beforeSplit>),<divisor>),fraction(sum(<afterSplit>,<right>...),<divisor>))'),
+    matchPattern: p('fraction(sum(<left>...,<beforeSplit>,<afterSplit>,<right>...),<denumerator>)'),
+    replacementPattern: p('sum(fraction(sum(<left>...,<beforeSplit>),<denumerator>),fraction(sum(<afterSplit>,<right>...),<denumerator>))'),
     matchCaptures: ["afterSplit","left","beforeSplit","right"],
     freeCaptures: [],
     selectOrder: [p('<afterSplit>')],
@@ -575,9 +678,9 @@ Umform.registerRule(new Umform.Rule({
 Umform.registerRule(new Umform.Rule({
     name: "fraction.extractFactor.numerator",
     title: "Extract Factor from Numerator",
-    matchPattern: p('fraction(product(<left>...,<x>,<right>...),<divisor>)'),
-    replacementPattern: p('product(<x>,fraction(product(<left>...,<right>...),<divisor>))'),
-    matchCaptures: ["x","left","right","divisor"],
+    matchPattern: p('fraction(product(<left>...,<x>,<right>...),<denumerator>)'),
+    replacementPattern: p('product(<x>,fraction(product(<left>...,<right>...),<denumerator>))'),
+    matchCaptures: ["x","left","right","denumerator"],
     freeCaptures: [],
     selectOrder: [p('<x>')],
     createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines("FACTOR","XTRCT",colors),
@@ -585,7 +688,19 @@ Umform.registerRule(new Umform.Rule({
 }));
 
 Umform.registerRule(new Umform.Rule({
-    name: "fraction.extractFactor.divisor",
+    name: "fraction.extractNumerator",
+    title: "Extract Numerator",
+    matchPattern: p('fraction(<x>,<denumerator>)'),
+    replacementPattern: p('product(<x>,fraction(number{1},<denumerator>))'),
+    matchCaptures: ["x","denumerator"],
+    freeCaptures: [],
+    selectOrder: [],
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines("NMRT","XTRCT",colors),
+    tags:["math.basic","reshape"]
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "fraction.extractFactor.denumerator",
     title: "Extract Factor from Numerator",
     matchPattern: p('fraction(<numerator>,product(<left>...,<x>,<right>...))'),
     replacementPattern: p('product(fraction(number{1},<x>),fraction(<numerator>,product(<left>...,<right>...)))'),
@@ -593,6 +708,42 @@ Umform.registerRule(new Umform.Rule({
     freeCaptures: [],
     selectOrder: [p('<x>')],
     createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines("FACTOR","XTRCT",colors),
+    tags:["math.basic","reshape"]
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "fraction.toPower",
+    title: "Denumerator to Power",
+    matchPattern: p('fraction(<numerator>,<denumerator>)'),
+    replacementPattern: p('product(<numerator>,power(<denumerator>,neg(number{1})))'),
+    matchCaptures: ["numerator","denumerator"],
+    freeCaptures: [],
+    selectOrder: [],
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines("x/y","⇛x·y^-1",colors),
+    tags:["math.basic","reshape"]
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "fraction.toPower2",
+    title: "Denumerator to Power",
+    matchPattern: p('fraction(<numerator>,power(<base>,<exp>))'),
+    replacementPattern: p('product(<numerator>,power(<base>,neg(exp)))'),
+    matchCaptures: ["numerator","base","exp"],
+    freeCaptures: [],
+    selectOrder: [],
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines("x/y^z","⇛x·y^-z",colors),
+    tags:["math.basic","reshape"]
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "fraction.toPower3",
+    title: "Denumerator to Power",
+    matchPattern: p('fraction(<numerator>,power(<base>,neg(<exp>)))'),
+    replacementPattern: p('product(<numerator>,power(<base>,<exp>))'),
+    matchCaptures: ["numerator","base","exp"],
+    freeCaptures: [],
+    selectOrder: [],
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines("x/y^-z","⇛x·y^z",colors),
     tags:["math.basic","reshape"]
 }));
 
@@ -613,7 +764,7 @@ Umform.registerRule(new Umform.Rule({
     name: "power.expOne.reversed",
     title: "Power Exponent One (Reversed)",
     matchPattern: p('<x>'),
-    replacementPattern: p('power(<x>,number{1})'),
+    replacementPattern: p('power(<x>,extraBrackets(number{1}))'),
     matchCaptures: ["x"],
     freeCaptures: [],
     selectOrder: [],
@@ -731,6 +882,18 @@ Umform.registerRule(new Umform.Rule({
 }));
 
 Umform.registerRule(new Umform.Rule({
+    name: "power.create.reversed",
+    title: "Create Power from two same Factora (reversed)",
+    matchPattern: p('power(<x>,number{2})'),
+    replacementPattern: p('product(<x>,<x>)'),
+    matchCaptures: ["x"],
+    freeCaptures: [],
+    selectOrder: [],
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines("⇛x·x","POW",colors),
+    tags:["math.basic","reshape"]
+}));
+
+Umform.registerRule(new Umform.Rule({
     name: "power.negExp",
     title: "Power with negative Exponent",
     matchPattern: p('power(<x>,neg(<y>))'),
@@ -742,6 +905,17 @@ Umform.registerRule(new Umform.Rule({
     tags:["math.basic","reshape"]
 }));
 
+Umform.registerRule(new Umform.Rule({
+    name: "power.negExp.reversed",
+    title: "Power with negative Exponent (Reversed)",
+    matchPattern: p('fraction(number{1},power(<x>,<y>))'),
+    replacementPattern: p('power(<x>,neg(<y>))'),
+    matchCaptures: ["x","y"],
+    freeCaptures: [],
+    selectOrder: [],
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines("⇛x^-y","NG EXP",colors),
+    tags:["math.basic","reshape"]
+}));
 
 Umform.registerRule(new Umform.Rule({
     name: "power.productSameExponent",
@@ -764,5 +938,43 @@ Umform.registerRule(new Umform.Rule({
     freeCaptures: [],
     selectOrder: [p('<afterSplit>')],
     createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines("x^z·y^z","⇛POW",colors),
+    tags:["math.basic","reshape"]
+}));
+
+// binomial formulas
+
+Umform.registerRule(new Umform.Rule({
+    name: "power.binomialFormula1",
+    title: "First Binomial Formula",
+    matchPattern: p('power(sum(<a>,<b>),number{2})'),
+    replacementPattern: p('sum(power(<a>,number{2}),product(number{2},<a>,<b>),power(<b>,number{2}))'),
+    matchCaptures: ["a","b"],
+    freeCaptures: [],
+    selectOrder: [],
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines("BINO","1",colors),
+    tags:["math.basic","reshape"]
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "power.binomialFormula2",
+    title: "Second Binomial Formula",
+    matchPattern: p('power(sum(<a>,neg(<b>)),number{2})'),
+    replacementPattern: p('sum(power(<a>,number{2}),neg(product(number{2},<a>,<b>)),power(<b>,number{2}))'),
+    matchCaptures: ["a","b"],
+    freeCaptures: [],
+    selectOrder: [],
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines("BINO","2",colors),
+    tags:["math.basic","reshape"]
+}));
+
+Umform.registerRule(new Umform.Rule({
+    name: "product.binomialFormula3",
+    title: "Third Binomial Formula",
+    matchPattern: p('product(<left>...,sum(<a>,<b>),<middle>...,sum(<a>,neg(<b>)),<right>...)'),
+    replacementPattern: p('product(<left>...,sum(power(<a>,number{2}),neg(power(<b>,number{2}))),<middle>...,<right>...)'),
+    matchCaptures: ["a","b","left","middle","right"],
+    freeCaptures: [],
+    selectOrder: [p('sum(<a>,<b>)'),p('sum(<a>,neg(<b>))')],
+    createIconFunction: (colors) => Umform.Icons.createTextIcon2Lines("BINO","3",colors),
     tags:["math.basic","reshape"]
 }));

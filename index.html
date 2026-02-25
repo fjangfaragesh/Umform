@@ -7,6 +7,9 @@
 html, body {
     margin: 0;
     padding: 0;
+    width:100%;
+    height: 100%;
+    overflow: hidden;
 }
 
 .expr-node {
@@ -34,21 +37,25 @@ html, body {
     <script src="core.js"></script>
     <script src="core.parse_stringify.js"></script>
     <script src="core.match_replace.js"></script>
+    <script src="core.WorkSpace.js"></script>
+    <script src="core.IdentifyerManager.js"></script>
     <script src="box.js"></script>
 
     <script src="ui.ExprNodeUI.js"></script>
     <script src="ui.ExprViewer.js"></script>
-    <script src="ui.WorkSpace.js"></script>
+    <script src="ui.WorkSpaceUI.js"></script>
     <script src="ui.ContextMenue.js"></script>
     <script src="ui.js"></script>
 
     <script src="types.core.js"></script>
+    <script src="types.firstOrderPredicateLogic.js"></script>
     <script src="types.logical.js"></script>
     <script src="types.math.basic.js"></script>
     <script src="types.equation.js"></script>
 
-    <script src="rules.math.basic.js"></script>
+    <script src="rules.firstOrderPredicateLogic.js"></script>
     <script src="rules.logical.js"></script>
+    <script src="rules.math.basic.js"></script>
     <script src="rules.equation.js"></script>
 
     <script src="exampletasks.js"></script>
@@ -59,21 +66,36 @@ let expr = null;
 let pattern = null;
 
 let workspace;
+let workspaceui;
 
 onload = () => {
 
-    expr = p(EXAMPLE_TASKS[4].task);
+    let s = sessionStorage.getItem("Umform.WorkSpace");
+    console.log(s);
+
+    workspace = new Umform.WorkSpace();
+
+    if (s !== null) {
+        let d = JSON.parse(s);
+        workspace.import(d);
+    } else {
+        workspace.newExprSheet("main",p(EXAMPLE_TASKS[4].task));
+        workspace.newExprSheet("clipboard sheet 1",p("_"));
+        workspace.newExprSheet("clipboard sheet 2",p("_"));
+        workspace.newExprSheet("clipboard sheet 3",p("__vertical__(id{\"false\"},id{\"true\"},neg(number{1}),number{0},number{1},id{\"math.constant.pi\"},id{\"math.constant.e\"},id{\"math.constant.i\"})"));
+    }
+    
+    
+    workspaceui = new Umform.WorkSpaceUI(workspace);
+    workspaceui.setSize(window.innerWidth, window.innerHeight);
+
     //expr = p('sum(product(id{"a"},id{"b"},id{"x"}),product(id{"y"},id{"b"},id{"a"}))');
     //expr = p('equals(id{"x"},product(sum(id{"a"},id{"b"}),sum(id{"c"},id{"d"})))');
     // power(fraction(sum(id{"a"},id{"b"}),power(id{"x"},number{"2"})),number{"3"})
         // power(power(power(sum(id{"a"},id{"b"}),number{"3"}),number{"3"}),number{"3"})
     // and(id{"true"},id{"true"})
-    workspace = new Umform.Workspace({
-        expr: expr,
-        rules: Array.from(Umform.RULES.values()),
-        autoRules: Array.from(Umform.AUTO_RULES.values()),
-    });
-    document.body.appendChild(workspace.element);
+   
+    document.body.appendChild(workspaceui.element);
 
    
 

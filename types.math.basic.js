@@ -14,7 +14,7 @@ Umform.registerType(new class extends Umform.TypeDefinition {
         }
         return new Umform.ExprNode({type: this.getName(), data: value});
     }
-    createBox(exprNodeUI, node, parentPrec) {
+    createBox(exprNodeUI, node, workSpace, parentPrec) {
         const textbox = new TextBox(String(node.data));
         return {box:textbox, nodeContentElements:[textbox]}
     }
@@ -30,11 +30,11 @@ Umform.registerType(new class extends Umform.TypeDefinition {
     createBlanc() {
         return new Umform.ExprNode({type: this.getName(), children: [new Umform.ExprNode({type:"_"})]});
     }
-    createBox(exprNodeUI, node, nodePrec) {
+    createBox(exprNodeUI, node, workSpace, nodePrec) {
         const minusbox = new TextBox("−")
         const box = new HBox([
                         minusbox,
-                        exprNodeUI.nodeToBox(node.children[0], nodePrec)
+                        exprNodeUI.nodeToBox(node.children[0], workSpace, nodePrec)
                     ], 2);
 
         return {box:box, nodeContentElements:[minusbox]}
@@ -127,7 +127,7 @@ Umform.registerType(new class extends Umform.NOperationTypeDefinition {
             return numResultNode;
         }
 
-        if (numSum === 1) {
+        if (numProduct === 1) {
             return new Umform.ExprNode({type: this.getName(), data: structuredClone(data), children: childrenNotCalculable});
         }
 
@@ -149,10 +149,10 @@ Umform.registerType(new class extends Umform.TypeDefinition {
     createBlanc() {
         return new Umform.ExprNode({type: this.getName(), children: [new Umform.ExprNode({type:"_"}),new Umform.ExprNode({type:"_"})]});
     }
-    createBox(exprNodeUI, node, nodePrec) {
+    createBox(exprNodeUI, node, workSpace, nodePrec) {
         const box = new SuperScriptBox(
-            exprNodeUI.nodeToBox(node.children[0], nodePrec),
-            exprNodeUI.nodeToBox(node.children[1], nodePrec)
+            exprNodeUI.nodeToBox(node.children[0], workSpace, nodePrec),
+            exprNodeUI.nodeToBox(node.children[1], workSpace, nodePrec)
         );
         return {box:box, nodeContentElements:[]};
     }
@@ -229,10 +229,10 @@ Umform.registerType(new class extends Umform.TypeDefinition {
     createBlanc() {
         return new Umform.ExprNode({type: this.getName(), children: [new Umform.ExprNode({type:"_"}),new Umform.ExprNode({type:"_"})]});
     }
-    createBox(exprNodeUI, node, nodePrec) {
+    createBox(exprNodeUI, node, workSpace, nodePrec) {
         const box = new FractionBox(
-                        exprNodeUI.nodeToBox(node.children[0], 0),
-                        exprNodeUI.nodeToBox(node.children[1], 0)
+                        exprNodeUI.nodeToBox(node.children[0], workSpace, 0),
+                        exprNodeUI.nodeToBox(node.children[1], workSpace, 0)
                     );// notePrec=0
         return {box:box, nodeContentElements:[box]};
     }
