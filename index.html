@@ -79,8 +79,8 @@ onload = () => {
         let d = JSON.parse(s);
         workspace.import(d);
     } else {
-        workspace.newExprSheet("main",p(EXAMPLE_TASKS[4].task));
-        workspace.newExprSheet("clipboard sheet 1",p("_"));
+        workspace.newExprSheet("main",p("_"));
+        workspace.newExprSheet("clipboard sheet 1",p(EXAMPLE_TASKS[4].task));
         workspace.newExprSheet("clipboard sheet 2",p("_"));
         workspace.newExprSheet("clipboard sheet 3",p("__vertical__(id{\"false\"},id{\"true\"},neg(number{1}),number{0},number{1},id{\"math.constant.pi\"},id{\"math.constant.e\"},id{\"math.constant.i\"})"));
     }
